@@ -4,9 +4,6 @@ using System.IO;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Threading;
 using CommunityToolkit.Mvvm.Input;
 using DiscImageStudio.Controls;
 using DiscImageStudio.Core.Calibration;
@@ -281,22 +278,17 @@ internal static class CalibrationPhotoViewModelTests
             if (inverse(point) is { } source && target.Sample(source.X, source.Y) == 0) value = 95;
             pixels[y * width + x] = value;
         }
-        var bitmap = BitmapSource.Create(width, height, 96, 96, PixelFormats.Gray8, null, pixels, width);
-        bitmap.Freeze();
-        PngBitmapEncoder encoder = new(); encoder.Frames.Add(BitmapFrame.Create(bitmap));
-        using var stream = File.Create(path); encoder.Save(stream);
+        TestImages.SaveGray8Png(path, width, height, pixels);
     }
 
     private static CalibrationViewModel CreateModel(DiscParametersState state)
     {
         var shell = (ShellViewModel)RuntimeHelpers.GetUninitializedObject(typeof(ShellViewModel));
-        Set(shell, "_log", new StringBuilder()); Set(shell, "_dispatcher", Dispatcher.CurrentDispatcher);
+        Set(shell, "_log", new StringBuilder()); Set(shell, "_dispatcher", new TestUiDispatcher());
         Set(shell, "<Toasts>k__BackingField", new ObservableCollection<ToastItem>());
-        foreach (string name in new[]
-        {
-            "OpenOutputCommand", "BrowseCdTrackCommand", "BrowseDvdIsoCommand",
-        })
-            Set(shell, $"<{name}>k__BackingField", new RelayCommand(() => { }));
+        Set(shell, "<OpenOutputCommand>k__BackingField", new RelayCommand(() => { }));
+        foreach (string name in new[] { "BrowseCdTrackCommand", "BrowseDvdIsoCommand" })
+            Set(shell, $"<{name}>k__BackingField", new AsyncRelayCommand(() => Task.CompletedTask));
         return new(shell, state);
     }
     private static void Await(object instance, string name, params object?[] arguments) => ((Task)Invoke(instance, name, arguments)!).GetAwaiter().GetResult();

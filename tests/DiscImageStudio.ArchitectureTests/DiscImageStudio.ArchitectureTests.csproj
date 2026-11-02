@@ -1,20 +1,36 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <!-- Every platform runs the full UI suite through Avalonia.Headless. Windows additionally
+       builds the IMAPI tests and the WIC decoder parity check (WPF imaging is only used as the
+       reference decoder there); pass -p:ArchitectureTestsWindows=true -p:EnableWindowsTargeting=true
+       to compile the Windows suite elsewhere. -->
+  <PropertyGroup>
+    <ArchitectureTestsWindows Condition="'$(ArchitectureTestsWindows)' == '' and '$(OS)' == 'Windows_NT'">true</ArchitectureTestsWindows>
+  </PropertyGroup>
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net10.0-windows</TargetFramework>
-    <UseWPF>true</UseWPF>
+    <TargetFramework Condition="'$(ArchitectureTestsWindows)' == 'true'">net10.0-windows</TargetFramework>
+    <TargetFramework Condition="'$(ArchitectureTestsWindows)' != 'true'">net10.0</TargetFramework>
+    <UseWPF Condition="'$(ArchitectureTestsWindows)' == 'true'">true</UseWPF>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
-    <ProjectReference Include="..\..\src\DiscImageStudio.Burning\DiscImageStudio.Burning.csproj" />
     <ProjectReference Include="..\..\src\DiscImageStudio.Core\DiscImageStudio.Core.csproj" />
     <ProjectReference Include="..\..\src\DiscImageStudio.Imaging\DiscImageStudio.Imaging.csproj" />
+    <ProjectReference Include="..\..\src\DiscImageStudio.Iso\DiscImageStudio.Iso.csproj" />
     <ProjectReference Include="..\..\src\DiscImageStudio.Cd\DiscImageStudio.Cd.csproj" />
     <ProjectReference Include="..\..\src\DiscImageStudio.Dvd\DiscImageStudio.Dvd.csproj" />
     <ProjectReference Include="..\..\src\DiscImageStudio.BluRay\DiscImageStudio.BluRay.csproj" />
+    <ProjectReference Include="..\..\src\DiscImageStudio.Burning\DiscImageStudio.Burning.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\DiscImageStudio.Presentation\DiscImageStudio.Presentation.csproj" />
     <ProjectReference Include="..\..\src\DiscImageStudio.App\DiscImageStudio.App.csproj" />
+  </ItemGroup>
+  <!-- Tests that need IMAPI or WIC at run time. -->
+  <ItemGroup Condition="'$(ArchitectureTestsWindows)' != 'true'">
+    <Compile Remove="CdDataRawImageTests.cs;CdRawImageByteOrderTests.cs;WicParityTests.cs" />
   </ItemGroup>
 </Project>

@@ -1,0 +1,67 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="DiscImageStudio.Controls.TitleBar">
+    <!-- App title row. On Windows it is the whole caption (drag area + window buttons); on
+         macOS the native traffic lights sit in its reserved left inset; on Linux the window
+         manager draws the caption and this row only carries the project title and app menu. -->
+    <UserControl.Styles>
+        <Style Selector="Button.Caption">
+            <Setter Property="Width" Value="46" />
+            <Setter Property="Height" Value="32" />
+            <Setter Property="Focusable" Value="False" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <ContentPresenter Name="PART_ContentPresenter" Background="{TemplateBinding Background}"
+                                      Content="{TemplateBinding Content}"
+                                      HorizontalContentAlignment="Center" VerticalContentAlignment="Center" />
+                </ControlTemplate>
+            </Setter>
+        </Style>
+        <Style Selector="Button.Caption:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource TitleBarHoverBrush}" />
+        </Style>
+        <Style Selector="Button.Caption:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource PressedOverlayBrush}" />
+        </Style>
+        <Style Selector="Button.Caption.Close:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource CloseHotSoftBrush}" />
+        </Style>
+        <Style Selector="Button.Caption.Close:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource CloseHotBrush}" />
+        </Style>
+        <Style Selector="Path.Glyph">
+            <Setter Property="Stroke" Value="{DynamicResource TextPrimaryBrush}" />
+            <Setter Property="StrokeThickness" Value="1" />
+            <Setter Property="Stretch" Value="None" />
+        </Style>
+    </UserControl.Styles>
+    <Grid x:Name="Bar" Height="32" Background="{DynamicResource BackgroundBrush}">
+        <StackPanel x:Name="TitleContent" Orientation="Horizontal" Margin="12,0" VerticalAlignment="Center"
+                    IsHitTestVisible="False">
+            <Image x:Name="AppIcon" Source="{StaticResource AppIconSource}" Width="16" Height="16" Margin="0,0,8,0" />
+            <TextBlock x:Name="AppTitleText" Text="Disc Image Studio" FontSize="12"
+                       Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
+            <TextBlock x:Name="ProjectTitleText" FontSize="12" Margin="8,0,0,0" IsVisible="False"
+                       Foreground="{DynamicResource TextMutedBrush}" VerticalAlignment="Center" />
+        </StackPanel>
+        <StackPanel x:Name="WindowButtons" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button x:Name="AppMenuButton" Classes="Caption" Click="AppMenu_Click" ToolTip.Tip="应用菜单" IsVisible="False">
+                <Path Data="{StaticResource WinEllipsisIcon}" Fill="{DynamicResource TextPrimaryBrush}"
+                      HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Button>
+            <Button x:Name="MinimizeButton" Classes="Caption" Click="Minimize_Click" ToolTip.Tip="最小化">
+                <Path Classes="Glyph" Data="{StaticResource WinMinimizeIcon}" Width="10" Height="1" />
+            </Button>
+            <Button x:Name="MaximizeButton" Classes="Caption" Click="Maximize_Click" ToolTip.Tip="最大化">
+                <Panel Width="10" Height="10">
+                    <Path x:Name="MaximizeGlyph" Classes="Glyph" Data="{StaticResource WinMaximizeIcon}" />
+                    <Path x:Name="RestoreGlyph" Classes="Glyph" Data="{StaticResource WinRestoreIcon}" IsVisible="False" />
+                </Panel>
+            </Button>
+            <Button x:Name="CloseButton" Classes="Caption Close" Click="Close_Click" ToolTip.Tip="关闭">
+                <Path Classes="Glyph" Data="{StaticResource WinCloseIcon}" Width="10" Height="10" />
+            </Button>
+        </StackPanel>
+    </Grid>
+</UserControl>

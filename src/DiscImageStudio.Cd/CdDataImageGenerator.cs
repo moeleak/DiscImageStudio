@@ -1,8 +1,7 @@
 using System.Diagnostics;
 using System.IO;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
 using DiscImageStudio.Core;
+using DiscImageStudio.Imaging;
 using DiscImageStudio.Iso;
 
 namespace DiscImageStudio.Cd;
@@ -63,9 +62,8 @@ public static class CdDataImageGenerator
         string target = Path.GetFullPath(outputPath);
         if (!Path.GetExtension(target).Equals(".iso", StringComparison.OrdinalIgnoreCase))
             throw new ArgumentException("CD data output must be a Mode 1 .iso image.", nameof(outputPath));
-        if (target.Equals(source, StringComparison.OrdinalIgnoreCase)
-            || target.StartsWith(Path.TrimEndingDirectorySeparator(plan.SourceDirectory)
-                + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+        if (PlatformPaths.SamePath(target, source)
+            || PlatformPaths.IsInside(target, plan.SourceDirectory))
             throw new ArgumentException("The output must be outside the source data folder and must not overwrite the source image.", nameof(outputPath));
         RasterImage image = RasterImage.Load(source);
         ToneProfile effectiveTone = (tone ?? ToneProfile.LegacyBinary).Normalized();
@@ -282,14 +280,7 @@ public static class CdDataImageGenerator
                 byte gray = (byte)((_sum[index] + _count[index] / 2) / _count[index]);
                 pixels[index * 4] = pixels[index * 4 + 1] = pixels[index * 4 + 2] = gray;
             }
-            string fullPath = Path.GetFullPath(path);
-            Directory.CreateDirectory(Path.GetDirectoryName(fullPath)!);
-            BitmapSource bitmap = BitmapSource.Create(size, size, 96, 96, PixelFormats.Bgra32,
-                null, pixels, size * 4);
-            PngBitmapEncoder encoder = new();
-            encoder.Frames.Add(BitmapFrame.Create(bitmap));
-            using FileStream output = File.Create(fullPath);
-            encoder.Save(output);
+            ImageCodec.SavePng(path, new Bgra32Image(size, size, pixels));
         }
     }
 

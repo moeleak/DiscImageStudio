@@ -1,0 +1,349 @@
+<UserControl x:Class="DiscImageStudio.Views.DesignView"
+             xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:conv="using:DiscImageStudio.Hosting"
+             xmlns:controls="using:DiscImageStudio.Controls"
+             xmlns:vm="using:DiscImageStudio.ViewModels"
+             x:DataType="vm:DesignViewModel"
+             SizeChanged="OnPageSizeChanged">
+    <UserControl.DataTemplates>
+        <!-- Property panel for the selected layer: numeric mm/°/% fields plus rename.
+             Two-column compact grid instead of the old fixed 94px WrapPanel cells. -->
+        <DataTemplate DataType="vm:DesignLayerViewModel">
+            <StackPanel>
+                <TextBlock Theme="{StaticResource FieldLabel}" Text="图层名" />
+                <TextBox Theme="{StaticResource CompactTextBox}"
+                         Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,14" />
+                <Grid Margin="0,0,0,12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="12" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="12" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <StackPanel Grid.Row="0" Grid.Column="0">
+                        <TextBlock Theme="{StaticResource FieldLabel}" Text="X (mm)" />
+                        <controls:NumberBox Theme="{StaticResource CompactTextBox}"
+                                 Value="{Binding TranslateXMm}" Format="F2" />
+                    </StackPanel>
+                    <StackPanel Grid.Row="0" Grid.Column="2">
+                        <TextBlock Theme="{StaticResource FieldLabel}" Text="Y (mm)" />
+                        <controls:NumberBox Theme="{StaticResource CompactTextBox}"
+                                 Value="{Binding TranslateYMm}" Format="F2" />
+                    </StackPanel>
+                    <StackPanel Grid.Row="2" Grid.Column="0">
+                        <TextBlock Theme="{StaticResource FieldLabel}" Text="旋转 (°)" />
+                        <controls:NumberBox Theme="{StaticResource CompactTextBox}"
+                                 Value="{Binding RotationDeg}" Format="F1" />
+                    </StackPanel>
+                    <StackPanel Grid.Row="2" Grid.Column="2">
+                        <TextBlock Theme="{StaticResource FieldLabel}" Text="缩放 (%)" />
+                        <controls:NumberBox Theme="{StaticResource CompactTextBox}"
+                                 Value="{Binding ScalePercent}" />
+                    </StackPanel>
+                </Grid>
+                <!-- One line with the full path in the tooltip: the picture itself is on the
+                     canvas, so the path should not push the tone module below the rail fold. -->
+                <TextBlock Theme="{StaticResource HintText}" TextWrapping="NoWrap"
+                           Text="{Binding ImagePath, Mode=OneWay}"
+                           TextTrimming="CharacterEllipsis"
+                           ToolTip.Tip="{Binding ImagePath, Mode=OneWay}" />
+            </StackPanel>
+        </DataTemplate>
+    </UserControl.DataTemplates>
+    <Grid Margin="{StaticResource PagePadding}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <controls:PageHeader Grid.Row="0" Title="设计" Badge="{Binding FamilyLabel}"
+                             Workspace="{x:Static vm:Workspace.Design}">
+            <controls:PageHeader.Actions>
+                <Button Theme="{StaticResource CompactButton}" Content="下一步：预览"
+                        Command="{Binding NavigateCommand}"
+                        CommandParameter="{x:Static vm:Workspace.Preview}" />
+            </controls:PageHeader.Actions>
+        </controls:PageHeader>
+
+        <!-- Wide: canvas in the middle with the layer stack and the property panel flanking it.
+             Narrow: the panels stack under the canvas and the page scrolls as one surface, so
+             the canvas never gets squeezed to a sliver (see OnPageSizeChanged). -->
+        <ScrollViewer x:Name="WorkScroll" Grid.Row="1" VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled" ScrollChanged="OnWorkScrollChanged"
+                      SizeChanged="OnWorkScrollSizeChanged"
+                      controls:ScrollMaskBehavior.Enabled="True">
+            <Grid x:Name="Workspace">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="{StaticResource SidePanelWidth}" />
+                    <ColumnDefinition Width="16" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="16" />
+                    <ColumnDefinition Width="{StaticResource SidePanelWidth}" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <!-- Files are disc contents, separate from the editable picture layers. Both
+                     cards share a rail so narrow windows can stack them without shrinking
+                     the layer list or obscuring the file picker. -->
+                <ScrollViewer x:Name="LeftRailScroll" Grid.Row="0" Grid.Column="0"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled"
+                              controls:ScrollMaskBehavior.Enabled="True">
+                    <Grid x:Name="LeftRail">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*" MinHeight="260" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <!-- Layer list. Rows are selectable and drive both the canvas selection and the
+                             property panel, mirroring how a selection drives the other workspaces. -->
+                        <Border x:Name="LayersCard" Grid.Row="0"
+                                Theme="{StaticResource CardStyle}" Padding="0">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="*" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <Border Grid.Row="0" Theme="{StaticResource CardHeaderBandStyle}">
+                                    <Grid Margin="16,0,12,0">
+                                        <TextBlock Text="图层" Theme="{StaticResource PanelTitle}" />
+                                        <TextBlock Text="{Binding Layers.Count, StringFormat={}{0} 层}"
+                                                   Theme="{StaticResource HintText}" HorizontalAlignment="Right" />
+                                    </Grid>
+                                </Border>
+                                <ListBox Grid.Row="1" ItemsSource="{Binding Layers}"
+                                         SelectedItem="{Binding SelectedLayer, Mode=TwoWay}"
+                                         Background="Transparent" BorderThickness="0" Padding="0"
+                                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                         ScrollViewer.VerticalScrollBarVisibility="Auto">
+                                    <ListBox.ItemContainerTheme>
+                                        <ControlTheme TargetType="ListBoxItem" BasedOn="{StaticResource RowListBoxItem}">
+                                            <Setter Property="Padding" Value="10,6" />
+                                        </ControlTheme>
+                                    </ListBox.ItemContainerTheme>
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate DataType="vm:DesignLayerViewModel">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="40" />
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <Border Grid.Column="0" Width="40" Height="40" CornerRadius="{StaticResource RadiusChip}"
+                                                        Background="{DynamicResource Surface2Brush}">
+                                                    <Image Source="{Binding Thumbnail, Converter={x:Static conv:ValueConverters.RasterImage}}" Width="36" Height="36"
+                                                           Stretch="Uniform" />
+                                                </Border>
+                                                <StackPanel Grid.Column="1" Margin="10,0,6,0" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding Name}" Theme="{StaticResource RowText}" />
+                                                    <TextBlock Theme="{StaticResource MicroText}" Margin="0,2,0,0">
+                                                        <Run Text="{Binding TranslateXMm, Mode=OneWay, StringFormat={}{0:F1}}" />
+                                                        <Run Text=", " />
+                                                        <Run Text="{Binding TranslateYMm, Mode=OneWay, StringFormat={}{0:F1}}" />
+                                                        <Run Text=" mm" />
+                                                    </TextBlock>
+                                                </StackPanel>
+                                                <Button Grid.Column="2" Theme="{StaticResource IconButton}"
+                                                        VerticalAlignment="Center"
+                                                        Command="{Binding $parent[ListBox].((vm:DesignViewModel)DataContext).ToggleVisibilityCommand}"
+                                                        CommandParameter="{Binding}"
+                                                        ToolTip.Tip="显示 / 隐藏">
+                                                    <Panel>
+                                                        <controls:LucideIcon Kind="Eye" Width="15" Height="15"
+                                                                             IsVisible="{Binding IsVisible}"
+                                                                             Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                        <controls:LucideIcon Kind="EyeOff" Width="15" Height="15"
+                                                                             IsVisible="{Binding !IsVisible}"
+                                                                             Foreground="{DynamicResource TextMutedBrush}" />
+                                                    </Panel>
+                                                </Button>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                                <StackPanel Grid.Row="2" Margin="12,10,12,12">
+                                    <!-- Selection actions: operate on the highlighted layer only. -->
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,10"
+                                                IsVisible="{Binding HasSelectionVisible}">
+                                        <Button Theme="{StaticResource IconButton}" Command="{Binding MoveSelectedUpCommand}" ToolTip.Tip="上移一层">
+                                            <controls:LucideIcon Kind="ArrowUp" Width="15" Height="15"
+                                                                      Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        </Button>
+                                        <Button Theme="{StaticResource IconButton}" Margin="6,0,0,0"
+                                                Command="{Binding MoveSelectedDownCommand}" ToolTip.Tip="下移一层">
+                                            <controls:LucideIcon Kind="ArrowDown" Width="15" Height="15"
+                                                                      Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        </Button>
+                                        <Button Theme="{StaticResource IconButton}" Margin="6,0,0,0"
+                                                Command="{Binding RemoveSelectedCommand}" ToolTip.Tip="删除选中图层（Del）">
+                                            <controls:LucideIcon Kind="Trash2" Width="15" Height="15"
+                                                                      Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        </Button>
+                                    </StackPanel>
+                                    <Button Theme="{StaticResource SecondaryButton}" Height="{StaticResource ControlHeight}"
+                                            Content="导入图片" Command="{Binding ImportImagesCommand}"
+                                            HorizontalAlignment="Stretch" />
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <controls:VisibilityGate x:Name="FilesCardGate" Grid.Row="1"
+                                                 IsOpen="True"
+                                                 SizeChanged="OnFilesCardSizeChanged">
+                            <!-- Disc contents, not image layers: the folder travels with the
+                                 disc and its ring position decides where the export/burn
+                                 pipeline writes around it. Output file locations stay on the
+                                 export page. -->
+                            <Border Theme="{StaticResource CardStyle}" Padding="14" Margin="0,16,0,0">
+                                <StackPanel>
+                                    <TextBlock Text="随盘文件" Theme="{StaticResource PanelTitle}"
+                                               Margin="0,0,0,12" />
+                                    <controls:VisibilityGate IsOpen="{Binding IsCd}">
+                                        <StackPanel>
+                                            <controls:PathField Label="文件夹" Compact="True"
+                                                                Text="{Binding State.CdDataDirectory}"
+                                                                ToolTip.Tip="{Binding State.CdDataDirectory}"
+                                                                ButtonLabel="选文件夹…"
+                                                                Command="{Binding BrowseDataCommand}" />
+                                            <controls:VisibilityGate IsOpen="{Binding State.HasCdFiles}">
+                                                <StackPanel Margin="0,14,0,0">
+                                                    <TextBlock Theme="{StaticResource FieldLabel}"
+                                                               Text="文件位置" Margin="0,0,0,6" />
+                                                    <controls:SegmentedControl LabelA="内圈" LabelB="外圈"
+                                                                               IsSecondSelected="{Binding State.CdFilesAtOuterRing}" />
+                                                </StackPanel>
+                                            </controls:VisibilityGate>
+                                            <TextBlock Theme="{StaticResource HintText}" Margin="0,12,0,0"
+                                                       Text="不附文件时使用音轨；附文件时自动使用数据盘。" />
+                                        </StackPanel>
+                                    </controls:VisibilityGate>
+                                    <controls:VisibilityGate IsOpen="{Binding IsDvd}">
+                                        <StackPanel>
+                                            <controls:PathField Label="文件夹（留空则整盘只绘图）" Compact="True"
+                                                                Text="{Binding State.DvdDataDirectory}"
+                                                                ToolTip.Tip="{Binding State.DvdDataDirectory}"
+                                                                ButtonLabel="选文件夹…"
+                                                                Command="{Binding BrowseDataCommand}" />
+                                            <controls:VisibilityGate IsOpen="{Binding State.HasDvdFiles}">
+                                                <StackPanel Margin="0,14,0,0">
+                                                    <TextBlock Theme="{StaticResource FieldLabel}"
+                                                               Text="文件位置" Margin="0,0,0,6" />
+                                                    <controls:SegmentedControl LabelA="内圈" LabelB="外圈"
+                                                                               IsSecondSelected="{Binding State.DvdFilesAtOuterRing}" />
+                                                </StackPanel>
+                                            </controls:VisibilityGate>
+                                        </StackPanel>
+                                    </controls:VisibilityGate>
+                                    <controls:VisibilityGate IsOpen="{Binding IsBluRay}">
+                                        <StackPanel>
+                                            <controls:PathField Label="文件夹（留空则整盘只绘图）" Compact="True"
+                                                                Text="{Binding State.BdDataDirectory}"
+                                                                ToolTip.Tip="{Binding State.BdDataDirectory}"
+                                                                ButtonLabel="选文件夹…"
+                                                                Command="{Binding BrowseDataCommand}" />
+                                            <controls:VisibilityGate IsOpen="{Binding State.HasBluRayFiles}">
+                                                <StackPanel Margin="0,14,0,0">
+                                                    <TextBlock Theme="{StaticResource FieldLabel}"
+                                                               Text="文件位置" Margin="0,0,0,6" />
+                                                    <controls:SegmentedControl LabelA="内圈" LabelB="外圈"
+                                                                               IsSecondSelected="{Binding State.BdFilesAtOuterRing}" />
+                                                </StackPanel>
+                                            </controls:VisibilityGate>
+                                        </StackPanel>
+                                    </controls:VisibilityGate>
+                                </StackPanel>
+                            </Border>
+                        </controls:VisibilityGate>
+                    </Grid>
+                </ScrollViewer>
+
+                <!-- Center: the mm canvas -->
+                <Border x:Name="CanvasCard" Grid.Row="0" Grid.Column="2"
+                        Background="{DynamicResource Surface1Brush}"
+                        BorderBrush="{DynamicResource DividerBrush}" BorderThickness="1"
+                        CornerRadius="{StaticResource RadiusCard}"
+                        ClipToBounds="True">
+                    <Grid>
+                        <controls:DiscDesignCanvas x:Name="DesignCanvas" />
+                        <!-- Always visible: the buttons are the discoverable way to zoom out,
+                             so hiding the bar at fit zoom would hide the feature itself. -->
+                        <Border HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                                Margin="0,0,10,10" Padding="3"
+                                Background="{DynamicResource Surface2Brush}"
+                                BorderBrush="{DynamicResource DividerBrush}" BorderThickness="1"
+                                CornerRadius="{StaticResource RadiusChip}"
+                                ToolTip.Tip="Ctrl/Alt + 滚轮同样可以缩放；中键拖动平移">
+                            <StackPanel Orientation="Horizontal">
+                                <Button Theme="{StaticResource IconButton}" Click="ZoomOutClick" ToolTip.Tip="缩小">
+                                    <controls:LucideIcon Kind="Minus" Width="14" Height="14"
+                                                              Foreground="{DynamicResource TextSecondaryBrush}" />
+                                </Button>
+                                <TextBlock Text="{Binding #DesignCanvas.ZoomPercent}"
+                                           Theme="{StaticResource MicroText}" MinWidth="40"
+                                           TextAlignment="Center" VerticalAlignment="Center" />
+                                <Button Theme="{StaticResource IconButton}" Click="ZoomInClick" ToolTip.Tip="放大">
+                                    <controls:LucideIcon Kind="Plus" Width="14" Height="14"
+                                                              Foreground="{DynamicResource TextSecondaryBrush}" />
+                                </Button>
+                                <Border Width="1" Height="16" Margin="3,0" VerticalAlignment="Center"
+                                        Background="{DynamicResource DividerBrush}" />
+                                <Button Theme="{StaticResource IconButton}" Click="ResetCanvasZoomClick" ToolTip.Tip="适应窗口（双击空白处同样生效）">
+                                    <controls:LucideIcon Kind="RefreshCcw" Width="14" Height="14"
+                                                              Foreground="{DynamicResource TextSecondaryBrush}" />
+                                </Button>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </Border>
+
+                <!-- Right rail: selected-layer properties on top, the tone module below.
+                     The rail is pinned to the viewport height (see UpdateResponsiveLayout),
+                     so the tone card's star row absorbs the height the property card leaves
+                     over and the column ends flush with the canvas. -->
+                <ScrollViewer x:Name="RightRailScroll" Grid.Row="0" Grid.Column="4"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled"
+                              controls:ScrollMaskBehavior.Enabled="True">
+                    <Grid x:Name="RightRail">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        <Border x:Name="PropsCard" Grid.Row="0" Theme="{StaticResource CardStyle}" Padding="14">
+                            <StackPanel>
+                                <TextBlock Text="属性" Theme="{StaticResource PanelTitle}"
+                                           Margin="0,0,0,12" />
+                                <!-- Selected/empty as two gates, like every other page: the
+                                     ContentPresenter keeps the numeric fields' implicit styles alive. -->
+                                <controls:VisibilityGate IsOpen="{Binding HasSelection}">
+                                    <ContentControl Content="{Binding SelectedLayer}" />
+                                </controls:VisibilityGate>
+                                <controls:VisibilityGate IsOpen="{Binding HasSelection}" Inverted="True">
+                                    <TextBlock Theme="{StaticResource HintText}"
+                                               Text="在画布上点击一个图层以编辑它的位置、旋转与缩放。" />
+                                </controls:VisibilityGate>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Tone lives next to the composite because it is the last step of the
+                             same material: the preview projects the composed picture through the
+                             engines' mapping, and the sliders feed generation, burn and read-back
+                             through the shared state. -->
+                        <Border x:Name="ToneCard" Grid.Row="1" Theme="{StaticResource CardStyle}" Padding="14"
+                                Margin="0,16,0,0">
+                            <controls:TonePanel x:Name="ToneRail" DataContext="{Binding Tone}" />
+                        </Border>
+                    </Grid>
+                </ScrollViewer>
+            </Grid>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

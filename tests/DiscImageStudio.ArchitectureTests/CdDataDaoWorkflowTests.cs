@@ -26,7 +26,7 @@ internal static class CdDataDaoWorkflowTests
             RecordingCdRawSession session = new() { LastLeadoutSector = remaining };
             using RecordingCdRawImageSession image = new(session.Calls) { ImageStartOfLeadout = sectors };
             List<string> operations = [];
-            WindowsImapiBurner.BurnCdDao(session, image, content, request, CancellationToken.None,
+            OpticalBurnWorkflows.BurnCdDao(session, image, content, request, CancellationToken.None,
                 reportOperation: operations.Add);
             Require(session.Calls.Contains("WriteMedia") && session.Calls[^1] == "ReleaseMedia",
                 "data DAO follows audio lead-out capacity handling and closes the session");
@@ -42,7 +42,7 @@ internal static class CdDataDaoWorkflowTests
         using RecordingCdRawImageSession tooLarge = new(tooSmall.Calls) { ImageStartOfLeadout = sectors };
         try
         {
-            WindowsImapiBurner.BurnCdDao(tooSmall, tooLarge, content, request, CancellationToken.None);
+            OpticalBurnWorkflows.BurnCdDao(tooSmall, tooLarge, content, request, CancellationToken.None);
             throw new InvalidOperationException("Expected excessive overburn to be rejected.");
         }
         catch (InvalidOperationException exception)

@@ -1,0 +1,37 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="using:DiscImageStudio.Controls"
+             x:Class="DiscImageStudio.Controls.SideNavItem">
+    <!-- Sidebar entry: hover lifts the surface, the active entry takes Surface2 and primary
+         text. Transitions read DynamicResource values, so palette switches fade too. -->
+    <UserControl.Styles>
+        <Style Selector="Border#Root">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="Background" Duration="0:0:0.15" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="controls|SideNavItem:pointerover Border#Root">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+        <Style Selector="controls|SideNavItem.active Border#Root">
+            <Setter Property="Background" Value="{DynamicResource Surface2Brush}" />
+        </Style>
+        <Style Selector="StackPanel#ItemContent">
+            <Setter Property="TextElement.Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+        </Style>
+        <Style Selector="controls|SideNavItem:pointerover StackPanel#ItemContent, controls|SideNavItem.active StackPanel#ItemContent">
+            <Setter Property="TextElement.Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        </Style>
+    </UserControl.Styles>
+    <Border x:Name="Root" Height="40" CornerRadius="8" Cursor="Hand">
+        <StackPanel x:Name="ItemContent" Orientation="Horizontal" Margin="12,0" VerticalAlignment="Center">
+            <controls:LucideIcon x:Name="Icon" Width="20" Height="20" IsVisible="False"
+                                 Foreground="{Binding $parent[StackPanel].(TextElement.Foreground)}" />
+            <TextBlock x:Name="LabelTextBlock" FontSize="14" FontWeight="Medium" Margin="9,0,0,0"
+                       VerticalAlignment="Center" />
+        </StackPanel>
+    </Border>
+</UserControl>

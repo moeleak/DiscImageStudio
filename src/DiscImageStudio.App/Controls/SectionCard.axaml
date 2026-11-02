@@ -1,0 +1,18 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="using:DiscImageStudio.Controls"
+             x:Class="DiscImageStudio.Controls.SectionCard">
+    <!-- Explicit: Body is this control's [Content] property, so the root must not use it. -->
+    <UserControl.Content>
+    <Border Theme="{StaticResource CardStyle}">
+        <StackPanel>
+            <StackPanel x:Name="HeaderRow" Orientation="Horizontal" Margin="0,0,0,16">
+                <controls:LucideIcon x:Name="HeaderIcon" Width="15" Height="15" IsVisible="False"
+                                     VerticalAlignment="Center" Foreground="{DynamicResource TextSecondaryBrush}" />
+                <TextBlock x:Name="HeaderText" Theme="{StaticResource CardTitle}" VerticalAlignment="Center" />
+            </StackPanel>
+            <ContentPresenter x:Name="BodyPresenter" />
+        </StackPanel>
+    </Border>
+    </UserControl.Content>
+</UserControl>

@@ -1,0 +1,317 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime">
+    <!--
+      Design tokens (single source of truth), generated from the WPF Tokens.xaml (dark) and
+      Palette.Light.xaml. Every Color and Brush key exists in both theme variants; views must
+      reference them with DynamicResource so switching RequestedThemeVariant restyles live.
+    -->
+    <ResourceDictionary.ThemeDictionaries>
+        <ResourceDictionary x:Key="Dark">
+            <Color x:Key="BackgroundColor">#121212</Color>
+            <Color x:Key="Surface1Color">#18181B</Color>
+            <Color x:Key="Surface2Color">#26262B</Color>
+            <Color x:Key="Surface3Color">#2E2E33</Color>
+            <Color x:Key="DividerColor">#1FFFFFFF</Color>
+            <Color x:Key="TextPrimaryColor">#FAFAFA</Color>
+            <Color x:Key="TextSecondaryColor">#A1A1AA</Color>
+            <Color x:Key="TextMutedColor">#8C8C92</Color>
+            <Color x:Key="PrimaryColor">#3385FF</Color>
+            <Color x:Key="OnPrimaryColor">#FFFFFFFF</Color>
+            <Color x:Key="PrimaryHoverColor">#74C0FF</Color>
+            <Color x:Key="PrimaryPressedColor">#2569CC</Color>
+            <Color x:Key="PrimarySoftColor">#1F3385FF</Color>
+            <Color x:Key="DangerColor">#F31260</Color>
+            <Color x:Key="DangerHoverColor">#FF4D84</Color>
+            <Color x:Key="DangerPressedColor">#C10A4A</Color>
+            <Color x:Key="WarningColor">#F5A524</Color>
+            <Color x:Key="SuccessColor">#17C964</Color>
+            <Color x:Key="CloseHotColor">#C42B1C</Color>
+            <Color x:Key="ScrollbarThumbColor">#3D3D45</Color>
+            <Color x:Key="ScrollbarThumbHoverColor">#52525B</Color>
+            <Color x:Key="BackgroundFadeColor">#00121212</Color>
+            <Color x:Key="SurfaceHoverColor">#1B1B1C</Color>
+            <Color x:Key="ShineClearColor">#00FFFFFF</Color>
+            <Color x:Key="ShineSoftColor">#26FFFFFF</Color>
+            <Color x:Key="ShineCoreColor">#66FFFFFF</Color>
+            <Color x:Key="Surface1FadeColor">#0018181B</Color>
+            <SolidColorBrush x:Key="OnPrimaryBrush" Color="#FFFFFFFF" />
+            <SolidColorBrush x:Key="BackgroundBrush" Color="#121212" />
+            <SolidColorBrush x:Key="Surface1Brush" Color="#18181B" />
+            <SolidColorBrush x:Key="Surface2Brush" Color="#26262B" />
+            <SolidColorBrush x:Key="Surface3Brush" Color="#2E2E33" />
+            <SolidColorBrush x:Key="DividerBrush" Color="#1FFFFFFF" />
+            <SolidColorBrush x:Key="TextPrimaryBrush" Color="#FAFAFA" />
+            <SolidColorBrush x:Key="TextSecondaryBrush" Color="#A1A1AA" />
+            <SolidColorBrush x:Key="TextMutedBrush" Color="#8C8C92" />
+            <SolidColorBrush x:Key="PrimaryBrush" Color="#3385FF" />
+            <SolidColorBrush x:Key="PrimaryHoverBrush" Color="#74C0FF" />
+            <SolidColorBrush x:Key="PrimaryPressedBrush" Color="#2569CC" />
+            <SolidColorBrush x:Key="DangerBrush" Color="#F31260" />
+            <SolidColorBrush x:Key="DangerHoverBrush" Color="#FF4D84" />
+            <SolidColorBrush x:Key="DangerPressedBrush" Color="#C10A4A" />
+            <SolidColorBrush x:Key="WarningBrush" Color="#F5A524" />
+            <SolidColorBrush x:Key="SuccessBrush" Color="#17C964" />
+            <SolidColorBrush x:Key="CloseHotBrush" Color="#C42B1C" />
+            <SolidColorBrush x:Key="ScrollbarThumbBrush" Color="#3D3D45" />
+            <SolidColorBrush x:Key="ScrollbarThumbHoverBrush" Color="#52525B" />
+            <LinearGradientBrush x:Key="ScrollFadeTopBrush" StartPoint="0%,0%" EndPoint="0%,100%">
+                <GradientStop Color="#121212" Offset="0" />
+                <GradientStop Color="#00121212" Offset="1" />
+            </LinearGradientBrush>
+            <LinearGradientBrush x:Key="ScrollFadeBottomBrush" StartPoint="0%,0%" EndPoint="0%,100%">
+                <GradientStop Color="#00121212" Offset="0" />
+                <GradientStop Color="#121212" Offset="1" />
+            </LinearGradientBrush>
+            <SolidColorBrush x:Key="HoverOverlayBrush" Color="#0AFFFFFF" />
+            <SolidColorBrush x:Key="PressedOverlayBrush" Color="#1FFFFFFF" />
+            <SolidColorBrush x:Key="TitleBarHoverBrush" Color="#12FFFFFF" />
+            <SolidColorBrush x:Key="BackdropBrush" Color="#80000000" />
+            <SolidColorBrush x:Key="PrimaryGlowBrush" Color="#803385FF" />
+            <SolidColorBrush x:Key="WarningSoftBrush" Color="#14F5A524" />
+            <SolidColorBrush x:Key="WarningBorderBrush" Color="#4DF5A524" />
+            <SolidColorBrush x:Key="WarningTextBrush" Color="#E5C783" />
+            <SolidColorBrush x:Key="PrimarySoftBrush" Color="#1F3385FF" />
+            <SolidColorBrush x:Key="DangerSoftBrush" Color="#1FF31260" />
+            <SolidColorBrush x:Key="DangerBorderBrush" Color="#4DF31260" />
+            <SolidColorBrush x:Key="SuccessSoftBrush" Color="#1F17C964" />
+            <SolidColorBrush x:Key="CloseHotSoftBrush" Color="#E6C42B1C" />
+            <SolidColorBrush x:Key="SurfaceHoverBrush" Color="#1B1B1C" />
+            <SolidColorBrush x:Key="BadgeSurfaceBrush" Color="#CC121212" />
+            <SolidColorBrush x:Key="DiscCanvasBackdropBrush" Color="#0D0D0F" />
+            <SolidColorBrush x:Key="DiscBodyBrush" Color="#1C1C20" />
+            <SolidColorBrush x:Key="DiscHubBrush" Color="#0D0D0F" />
+            <SolidColorBrush x:Key="DiscRingBrush" Color="#303385FF" />
+            <SolidColorBrush x:Key="DiscGuideBrush" Color="#55A1A1AA" />
+            <SolidColorBrush x:Key="DiscMaskBrush" Color="#88000000" />
+            <SolidColorBrush x:Key="DiscSelectionBrush" Color="#3385FF" />
+            <SolidColorBrush x:Key="CalibrationPhotoBackdropBrush" Color="#13151A" />
+            <SolidColorBrush x:Key="CalibrationCaptionBrush" Color="#DC13151A" />
+            <SolidColorBrush x:Key="CalibrationEdgeBrush" Color="#74C0FF" />
+            <SolidColorBrush x:Key="CalibrationHubOutlineBrush" Color="#F5A524" />
+            <SolidColorBrush x:Key="CalibrationTraceBrush" Color="#22D3EE" />
+            <SolidColorBrush x:Key="CalibrationPredictionBrush" Color="#FFA94D" />
+            <SolidColorBrush x:Key="CalibrationHandleBrush" Color="#D4D4D8" />
+            <SolidColorBrush x:Key="CalibrationOutlineBrush" Color="#000000" />
+            <!-- Fluent text fields drawn like the WPF fields: card fill, hairline border,
+                 muted on hover, primary on focus. -->
+            <StaticResource x:Key="TextControlBackground" ResourceKey="Surface1Brush" />
+            <StaticResource x:Key="TextControlBackgroundPointerOver" ResourceKey="Surface1Brush" />
+            <StaticResource x:Key="TextControlBackgroundFocused" ResourceKey="Surface1Brush" />
+            <StaticResource x:Key="TextControlBorderBrush" ResourceKey="DividerBrush" />
+            <StaticResource x:Key="TextControlBorderBrushPointerOver" ResourceKey="TextMutedBrush" />
+            <StaticResource x:Key="TextControlBorderBrushFocused" ResourceKey="PrimaryBrush" />
+            <StaticResource x:Key="TextControlForeground" ResourceKey="TextPrimaryBrush" />
+            <StaticResource x:Key="TextControlForegroundPointerOver" ResourceKey="TextPrimaryBrush" />
+            <StaticResource x:Key="TextControlForegroundFocused" ResourceKey="TextPrimaryBrush" />
+            <StaticResource x:Key="TextControlPlaceholderForeground" ResourceKey="TextMutedBrush" />
+            <StaticResource x:Key="TextControlPlaceholderForegroundPointerOver" ResourceKey="TextMutedBrush" />
+            <StaticResource x:Key="TextControlPlaceholderForegroundFocused" ResourceKey="TextMutedBrush" />
+            <!-- Fluent combo boxes and check boxes in the WPF field colors. -->
+            <StaticResource x:Key="ComboBoxBackground" ResourceKey="Surface1Brush" />
+            <StaticResource x:Key="ComboBoxBackgroundPointerOver" ResourceKey="Surface1Brush" />
+            <StaticResource x:Key="ComboBoxBackgroundPressed" ResourceKey="Surface1Brush" />
+            <StaticResource x:Key="ComboBoxBackgroundUnfocused" ResourceKey="Surface1Brush" />
+            <StaticResource x:Key="ComboBoxBackgroundDisabled" ResourceKey="Surface1Brush" />
+            <StaticResource x:Key="ComboBoxBorderBrush" ResourceKey="DividerBrush" />
+            <StaticResource x:Key="ComboBoxBorderBrushPointerOver" ResourceKey="TextMutedBrush" />
+            <StaticResource x:Key="ComboBoxBorderBrushPressed" ResourceKey="PrimaryBrush" />
+            <StaticResource x:Key="ComboBoxBorderBrushDisabled" ResourceKey="DividerBrush" />
+            <StaticResource x:Key="ComboBoxForeground" ResourceKey="TextPrimaryBrush" />
+            <StaticResource x:Key="ComboBoxForegroundDisabled" ResourceKey="TextMutedBrush" />
+            <StaticResource x:Key="ComboBoxPlaceHolderForeground" ResourceKey="TextMutedBrush" />
+            <StaticResource x:Key="ComboBoxDropDownGlyphForeground" ResourceKey="TextMutedBrush" />
+            <StaticResource x:Key="ComboBoxDropDownGlyphForegroundDisabled" ResourceKey="TextMutedBrush" />
+            <StaticResource x:Key="ComboBoxDropDownBackground" ResourceKey="Surface1Brush" />
+            <StaticResource x:Key="ComboBoxDropDownBorderBrush" ResourceKey="DividerBrush" />
+            <StaticResource x:Key="ComboBoxItemBackgroundPointerOver" ResourceKey="HoverOverlayBrush" />
+            <StaticResource x:Key="CheckBoxCheckBackgroundFillUnchecked" ResourceKey="Surface1Brush" />
+            <StaticResource x:Key="CheckBoxCheckBackgroundFillUncheckedPointerOver" ResourceKey="Surface1Brush" />
+            <StaticResource x:Key="CheckBoxCheckBackgroundFillUncheckedPressed" ResourceKey="Surface1Brush" />
+            <StaticResource x:Key="CheckBoxCheckBackgroundStrokeUnchecked" ResourceKey="TextMutedBrush" />
+            <StaticResource x:Key="CheckBoxCheckBackgroundStrokeUncheckedPointerOver" ResourceKey="TextSecondaryBrush" />
+            <StaticResource x:Key="CheckBoxCheckBackgroundStrokeUncheckedPressed" ResourceKey="TextSecondaryBrush" />
+            <StaticResource x:Key="CheckBoxCheckBackgroundFillChecked" ResourceKey="PrimaryBrush" />
+            <StaticResource x:Key="CheckBoxCheckBackgroundFillCheckedPointerOver" ResourceKey="PrimaryBrush" />
+            <StaticResource x:Key="CheckBoxCheckBackgroundFillCheckedPressed" ResourceKey="PrimaryBrush" />
+            <StaticResource x:Key="CheckBoxCheckGlyphForegroundChecked" ResourceKey="OnPrimaryBrush" />
+            <StaticResource x:Key="CheckBoxCheckGlyphForegroundCheckedPointerOver" ResourceKey="OnPrimaryBrush" />
+            <StaticResource x:Key="CheckBoxCheckGlyphForegroundCheckedPressed" ResourceKey="OnPrimaryBrush" />
+            <StaticResource x:Key="CheckBoxForegroundUnchecked" ResourceKey="TextPrimaryBrush" />
+            <StaticResource x:Key="CheckBoxForegroundUncheckedPointerOver" ResourceKey="TextPrimaryBrush" />
+            <StaticResource x:Key="CheckBoxForegroundChecked" ResourceKey="TextPrimaryBrush" />
+            <StaticResource x:Key="CheckBoxForegroundCheckedPointerOver" ResourceKey="TextPrimaryBrush" />
+        </ResourceDictionary>
+        <ResourceDictionary x:Key="Light">
+            <Color x:Key="BackgroundColor">#F5F5F7</Color>
+            <Color x:Key="Surface1Color">#FFFFFF</Color>
+            <Color x:Key="Surface2Color">#ECECEF</Color>
+            <Color x:Key="Surface3Color">#E2E2E6</Color>
+            <Color x:Key="DividerColor">#1A000000</Color>
+            <Color x:Key="TextPrimaryColor">#18181B</Color>
+            <Color x:Key="TextSecondaryColor">#52525B</Color>
+            <Color x:Key="TextMutedColor">#71717A</Color>
+            <Color x:Key="PrimaryColor">#2569CC</Color>
+            <Color x:Key="OnPrimaryColor">#FFFFFF</Color>
+            <Color x:Key="PrimaryHoverColor">#1D5BB4</Color>
+            <Color x:Key="PrimaryPressedColor">#16488F</Color>
+            <Color x:Key="PrimarySoftColor">#1F2569CC</Color>
+            <Color x:Key="DangerColor">#D61F4E</Color>
+            <Color x:Key="DangerHoverColor">#B81642</Color>
+            <Color x:Key="DangerPressedColor">#9C0F36</Color>
+            <Color x:Key="WarningColor">#B45309</Color>
+            <Color x:Key="SuccessColor">#15803D</Color>
+            <Color x:Key="CloseHotColor">#C42B1C</Color>
+            <Color x:Key="ScrollbarThumbColor">#C7C7CC</Color>
+            <Color x:Key="ScrollbarThumbHoverColor">#A1A1AA</Color>
+            <Color x:Key="BackgroundFadeColor">#00F5F5F7</Color>
+            <Color x:Key="SurfaceHoverColor">#EBEBEF</Color>
+            <Color x:Key="ShineClearColor">#00000000</Color>
+            <Color x:Key="ShineSoftColor">#1A000000</Color>
+            <Color x:Key="ShineCoreColor">#40000000</Color>
+            <Color x:Key="Surface1FadeColor">#00FFFFFF</Color>
+            <SolidColorBrush x:Key="OnPrimaryBrush" Color="#FFFFFF" />
+            <SolidColorBrush x:Key="BackgroundBrush" Color="#F5F5F7" />
+            <SolidColorBrush x:Key="Surface1Brush" Color="#FFFFFF" />
+            <SolidColorBrush x:Key="Surface2Brush" Color="#ECECEF" />
+            <SolidColorBrush x:Key="Surface3Brush" Color="#E2E2E6" />
+            <SolidColorBrush x:Key="DividerBrush" Color="#1A000000" />
+            <SolidColorBrush x:Key="TextPrimaryBrush" Color="#18181B" />
+            <SolidColorBrush x:Key="TextSecondaryBrush" Color="#52525B" />
+            <SolidColorBrush x:Key="TextMutedBrush" Color="#71717A" />
+            <SolidColorBrush x:Key="PrimaryBrush" Color="#2569CC" />
+            <SolidColorBrush x:Key="PrimaryHoverBrush" Color="#1D5BB4" />
+            <SolidColorBrush x:Key="PrimaryPressedBrush" Color="#16488F" />
+            <SolidColorBrush x:Key="DangerBrush" Color="#D61F4E" />
+            <SolidColorBrush x:Key="DangerHoverBrush" Color="#B81642" />
+            <SolidColorBrush x:Key="DangerPressedBrush" Color="#9C0F36" />
+            <SolidColorBrush x:Key="WarningBrush" Color="#B45309" />
+            <SolidColorBrush x:Key="SuccessBrush" Color="#15803D" />
+            <SolidColorBrush x:Key="CloseHotBrush" Color="#C42B1C" />
+            <SolidColorBrush x:Key="ScrollbarThumbBrush" Color="#C7C7CC" />
+            <SolidColorBrush x:Key="ScrollbarThumbHoverBrush" Color="#A1A1AA" />
+            <LinearGradientBrush x:Key="ScrollFadeTopBrush" StartPoint="0%,0%" EndPoint="0%,100%">
+                <GradientStop Color="#F5F5F7" Offset="0" />
+                <GradientStop Color="#00F5F5F7" Offset="1" />
+            </LinearGradientBrush>
+            <LinearGradientBrush x:Key="ScrollFadeBottomBrush" StartPoint="0%,0%" EndPoint="0%,100%">
+                <GradientStop Color="#00F5F5F7" Offset="0" />
+                <GradientStop Color="#F5F5F7" Offset="1" />
+            </LinearGradientBrush>
+            <SolidColorBrush x:Key="HoverOverlayBrush" Color="#08000000" />
+            <SolidColorBrush x:Key="PressedOverlayBrush" Color="#14000000" />
+            <SolidColorBrush x:Key="TitleBarHoverBrush" Color="#0F000000" />
+            <SolidColorBrush x:Key="BackdropBrush" Color="#66000000" />
+            <SolidColorBrush x:Key="PrimaryGlowBrush" Color="#4D2569CC" />
+            <SolidColorBrush x:Key="WarningSoftBrush" Color="#1FB45309" />
+            <SolidColorBrush x:Key="WarningBorderBrush" Color="#66B45309" />
+            <SolidColorBrush x:Key="WarningTextBrush" Color="#8A5205" />
+            <SolidColorBrush x:Key="PrimarySoftBrush" Color="#1F2569CC" />
+            <SolidColorBrush x:Key="DangerSoftBrush" Color="#1FD61F4E" />
+            <SolidColorBrush x:Key="DangerBorderBrush" Color="#66D61F4E" />
+            <SolidColorBrush x:Key="SuccessSoftBrush" Color="#1F15803D" />
+            <SolidColorBrush x:Key="CloseHotSoftBrush" Color="#E6C42B1C" />
+            <SolidColorBrush x:Key="SurfaceHoverBrush" Color="#EBEBEF" />
+            <SolidColorBrush x:Key="BadgeSurfaceBrush" Color="#CCFFFFFF" />
+            <SolidColorBrush x:Key="DiscCanvasBackdropBrush" Color="#E6E6EA" />
+            <SolidColorBrush x:Key="DiscBodyBrush" Color="#FFFFFF" />
+            <SolidColorBrush x:Key="DiscHubBrush" Color="#E2E2E6" />
+            <SolidColorBrush x:Key="DiscRingBrush" Color="#302569CC" />
+            <SolidColorBrush x:Key="DiscGuideBrush" Color="#5571717A" />
+            <SolidColorBrush x:Key="DiscMaskBrush" Color="#66000000" />
+            <SolidColorBrush x:Key="DiscSelectionBrush" Color="#2569CC" />
+            <SolidColorBrush x:Key="CalibrationPhotoBackdropBrush" Color="#D9DADE" />
+            <SolidColorBrush x:Key="CalibrationCaptionBrush" Color="#E6FFFFFF" />
+            <SolidColorBrush x:Key="CalibrationEdgeBrush" Color="#0B66D0" />
+            <SolidColorBrush x:Key="CalibrationHubOutlineBrush" Color="#B45309" />
+            <SolidColorBrush x:Key="CalibrationTraceBrush" Color="#0891B2" />
+            <SolidColorBrush x:Key="CalibrationPredictionBrush" Color="#C2410C" />
+            <SolidColorBrush x:Key="CalibrationHandleBrush" Color="#3F3F46" />
+            <SolidColorBrush x:Key="CalibrationOutlineBrush" Color="#000000" />
+            <!-- Fluent text fields drawn like the WPF fields: card fill, hairline border,
+                 muted on hover, primary on focus. -->
+            <StaticResource x:Key="TextControlBackground" ResourceKey="Surface1Brush" />
+            <StaticResource x:Key="TextControlBackgroundPointerOver" ResourceKey="Surface1Brush" />
+            <StaticResource x:Key="TextControlBackgroundFocused" ResourceKey="Surface1Brush" />
+            <StaticResource x:Key="TextControlBorderBrush" ResourceKey="DividerBrush" />
+            <StaticResource x:Key="TextControlBorderBrushPointerOver" ResourceKey="TextMutedBrush" />
+            <StaticResource x:Key="TextControlBorderBrushFocused" ResourceKey="PrimaryBrush" />
+            <StaticResource x:Key="TextControlForeground" ResourceKey="TextPrimaryBrush" />
+            <StaticResource x:Key="TextControlForegroundPointerOver" ResourceKey="TextPrimaryBrush" />
+            <StaticResource x:Key="TextControlForegroundFocused" ResourceKey="TextPrimaryBrush" />
+            <StaticResource x:Key="TextControlPlaceholderForeground" ResourceKey="TextMutedBrush" />
+            <StaticResource x:Key="TextControlPlaceholderForegroundPointerOver" ResourceKey="TextMutedBrush" />
+            <StaticResource x:Key="TextControlPlaceholderForegroundFocused" ResourceKey="TextMutedBrush" />
+            <!-- Fluent combo boxes and check boxes in the WPF field colors. -->
+            <StaticResource x:Key="ComboBoxBackground" ResourceKey="Surface1Brush" />
+            <StaticResource x:Key="ComboBoxBackgroundPointerOver" ResourceKey="Surface1Brush" />
+            <StaticResource x:Key="ComboBoxBackgroundPressed" ResourceKey="Surface1Brush" />
+            <StaticResource x:Key="ComboBoxBackgroundUnfocused" ResourceKey="Surface1Brush" />
+            <StaticResource x:Key="ComboBoxBackgroundDisabled" ResourceKey="Surface1Brush" />
+            <StaticResource x:Key="ComboBoxBorderBrush" ResourceKey="DividerBrush" />
+            <StaticResource x:Key="ComboBoxBorderBrushPointerOver" ResourceKey="TextMutedBrush" />
+            <StaticResource x:Key="ComboBoxBorderBrushPressed" ResourceKey="PrimaryBrush" />
+            <StaticResource x:Key="ComboBoxBorderBrushDisabled" ResourceKey="DividerBrush" />
+            <StaticResource x:Key="ComboBoxForeground" ResourceKey="TextPrimaryBrush" />
+            <StaticResource x:Key="ComboBoxForegroundDisabled" ResourceKey="TextMutedBrush" />
+            <StaticResource x:Key="ComboBoxPlaceHolderForeground" ResourceKey="TextMutedBrush" />
+            <StaticResource x:Key="ComboBoxDropDownGlyphForeground" ResourceKey="TextMutedBrush" />
+            <StaticResource x:Key="ComboBoxDropDownGlyphForegroundDisabled" ResourceKey="TextMutedBrush" />
+            <StaticResource x:Key="ComboBoxDropDownBackground" ResourceKey="Surface1Brush" />
+            <StaticResource x:Key="ComboBoxDropDownBorderBrush" ResourceKey="DividerBrush" />
+            <StaticResource x:Key="ComboBoxItemBackgroundPointerOver" ResourceKey="HoverOverlayBrush" />
+            <StaticResource x:Key="CheckBoxCheckBackgroundFillUnchecked" ResourceKey="Surface1Brush" />
+            <StaticResource x:Key="CheckBoxCheckBackgroundFillUncheckedPointerOver" ResourceKey="Surface1Brush" />
+            <StaticResource x:Key="CheckBoxCheckBackgroundFillUncheckedPressed" ResourceKey="Surface1Brush" />
+            <StaticResource x:Key="CheckBoxCheckBackgroundStrokeUnchecked" ResourceKey="TextMutedBrush" />
+            <StaticResource x:Key="CheckBoxCheckBackgroundStrokeUncheckedPointerOver" ResourceKey="TextSecondaryBrush" />
+            <StaticResource x:Key="CheckBoxCheckBackgroundStrokeUncheckedPressed" ResourceKey="TextSecondaryBrush" />
+            <StaticResource x:Key="CheckBoxCheckBackgroundFillChecked" ResourceKey="PrimaryBrush" />
+            <StaticResource x:Key="CheckBoxCheckBackgroundFillCheckedPointerOver" ResourceKey="PrimaryBrush" />
+            <StaticResource x:Key="CheckBoxCheckBackgroundFillCheckedPressed" ResourceKey="PrimaryBrush" />
+            <StaticResource x:Key="CheckBoxCheckGlyphForegroundChecked" ResourceKey="OnPrimaryBrush" />
+            <StaticResource x:Key="CheckBoxCheckGlyphForegroundCheckedPointerOver" ResourceKey="OnPrimaryBrush" />
+            <StaticResource x:Key="CheckBoxCheckGlyphForegroundCheckedPressed" ResourceKey="OnPrimaryBrush" />
+            <StaticResource x:Key="CheckBoxForegroundUnchecked" ResourceKey="TextPrimaryBrush" />
+            <StaticResource x:Key="CheckBoxForegroundUncheckedPointerOver" ResourceKey="TextPrimaryBrush" />
+            <StaticResource x:Key="CheckBoxForegroundChecked" ResourceKey="TextPrimaryBrush" />
+            <StaticResource x:Key="CheckBoxForegroundCheckedPointerOver" ResourceKey="TextPrimaryBrush" />
+        </ResourceDictionary>
+    </ResourceDictionary.ThemeDictionaries>
+    <Thickness x:Key="TextControlBorderThemeThicknessFocused">1</Thickness>
+
+    <!-- Shape and metric tokens: radii, control heights and the shared page padding. -->
+    <CornerRadius x:Key="RadiusField">8</CornerRadius>
+    <CornerRadius x:Key="RadiusCard">12</CornerRadius>
+    <CornerRadius x:Key="RadiusCardHeader">11,11,0,0</CornerRadius>
+    <CornerRadius x:Key="RadiusCardFooter">0,0,11,11</CornerRadius>
+    <CornerRadius x:Key="RadiusChip">5</CornerRadius>
+    <CornerRadius x:Key="RadiusPanel">8</CornerRadius>
+    <CornerRadius x:Key="RadiusFloating">10</CornerRadius>
+    <sys:Double x:Key="ButtonHeight">34</sys:Double>
+    <sys:Double x:Key="ControlHeight">32</sys:Double>
+    <sys:Double x:Key="CompactHeight">28</sys:Double>
+    <sys:Double x:Key="SidebarWidth">264</sys:Double>
+    <sys:Double x:Key="SidebarCollapsedWidth">60</sys:Double>
+    <sys:Double x:Key="SidePanelWidthValue">256</sys:Double>
+    <GridLength x:Key="SidePanelWidth">256</GridLength>
+    <Thickness x:Key="PagePadding">32,20,32,32</Thickness>
+
+    <!-- Exactly two elevations: FloatingShadow for popups, flyouts and toasts, ModalShadow
+         for the confirmation card. -->
+    <BoxShadows x:Key="FloatingShadow">0 6 18 0 #73000000</BoxShadows>
+    <BoxShadows x:Key="ModalShadow">0 10 32 0 #80000000</BoxShadows>
+
+    <!-- Embedded HarmonyOS Sans SC covers Latin + CJK for the whole UI on every platform. -->
+    <FontFamily x:Key="AppFontFamily">avares://DiscImageStudio/Assets/Fonts#HarmonyOS Sans SC</FontFamily>
+    <FontFamily x:Key="MonoFontFamily">Cascadia Mono, Consolas, Menlo, DejaVu Sans Mono, avares://DiscImageStudio/Assets/Fonts#HarmonyOS Sans SC</FontFamily>
+
+    <Bitmap x:Key="AppIconSource">avares://DiscImageStudio/Assets/DiscImageStudio-256.png</Bitmap>
+
+    <!-- Window control glyphs (10x10, 1px strokes). -->
+    <StreamGeometry x:Key="WinMinimizeIcon">M0,0.5 H10</StreamGeometry>
+    <StreamGeometry x:Key="WinMaximizeIcon">M0.5,0.5 H9.5 V9.5 H0.5 Z</StreamGeometry>
+    <StreamGeometry x:Key="WinRestoreIcon">M0.5,2.5 H7.5 V9.5 H0.5 Z M2.5,2.5 V0.5 H9.5 V7.5 H7.5</StreamGeometry>
+    <StreamGeometry x:Key="WinCloseIcon">M0,0 L10,10 M10,0 L0,10</StreamGeometry>
+    <StreamGeometry x:Key="WinEllipsisIcon">M0,1 A1,1 0 1 1 2,1 A1,1 0 1 1 0,1 Z M4,1 A1,1 0 1 1 6,1 A1,1 0 1 1 4,1 Z M8,1 A1,1 0 1 1 10,1 A1,1 0 1 1 8,1 Z</StreamGeometry>
+</ResourceDictionary>

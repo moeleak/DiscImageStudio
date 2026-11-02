@@ -1,6 +1,4 @@
 using System.IO;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
 using DiscImageStudio.Core;
 using DiscImageStudio.Imaging;
 
@@ -105,15 +103,14 @@ internal static class ThreeLevelDitherTests
         const int width = 19;
         const int height = 11;
         byte[] input = ToBgra(Enumerable.Range(0, width * height).Select(index => (byte)(index * 43 % 256)).ToArray());
-        BitmapSource source = BitmapSource.Create(width, height, 144, 144, PixelFormats.Bgra32, null, input, width * 4);
-        BitmapSource result = GrayscaleDither.Process(source, Levels);
-        Require(result.PixelWidth == width && result.PixelHeight == height
+        Bgra32Image source = new(width, height, input, 144, 144);
+        Gray8Image result = GrayscaleDither.Process(source, Levels);
+        Require(result.Width == width && result.Height == height
             && Math.Abs(result.DpiX - 144) < 0.01 && Math.Abs(result.DpiY - 144) < 0.01,
             "processing retains original dimensions and DPI");
-        Require(result.IsFrozen && result.Format == PixelFormats.Gray8, "the result is a frozen Gray8 bitmap");
         byte[] expected = GrayscaleDither.ProcessPixels(input, width, height, Levels);
         Require(ReadGray(result).SequenceEqual(expected), "bitmap and raw pixel processing agree");
-        Require(ReadGray(GrayscaleDither.Process(result, Levels)).SequenceEqual(expected),
+        Require(ReadGray(GrayscaleDither.Process(result.ToBgra32(), Levels)).SequenceEqual(expected),
             "reopening a three-level bitmap does not redither its existing pixels");
 
         string directory = Path.Combine(Path.GetTempPath(), $"three-level-dither-{Guid.NewGuid():N}");
@@ -122,7 +119,7 @@ internal static class ThreeLevelDitherTests
         {
             string path = Path.Combine(directory, "three-level.png");
             GrayscaleDither.SavePng(result, path, Levels);
-            BitmapSource loaded = GrayscaleDither.LoadImage(path);
+            Bgra32Image loaded = GrayscaleDither.LoadImage(path);
             byte[] actual = ReadGray(loaded);
             Require(actual.All(value => value is 0 or 85 or 255) && actual.SequenceEqual(expected),
                 "the saved PNG contains exactly the processed three-level pixels");
@@ -147,13 +144,9 @@ internal static class ThreeLevelDitherTests
         return pixels;
     }
 
-    private static byte[] ReadGray(BitmapSource source)
-    {
-        BitmapSource gray = source.Format == PixelFormats.Gray8 ? source : new FormatConvertedBitmap(source, PixelFormats.Gray8, null, 0);
-        byte[] result = new byte[gray.PixelWidth * gray.PixelHeight];
-        gray.CopyPixels(result, gray.PixelWidth, 0);
-        return result;
-    }
+    private static byte[] ReadGray(Bgra32Image source) => TestImages.ReadGray(source);
+
+    private static byte[] ReadGray(Gray8Image source) => TestImages.ReadGray(source);
 
     private static void Require(bool condition, string message)
     {

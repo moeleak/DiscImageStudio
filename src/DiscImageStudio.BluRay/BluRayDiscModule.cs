@@ -82,7 +82,7 @@ public sealed class BluRayDiscModule : IOpticalDiscModule
         if (command.Name == "bd-encode")
         {
             string input = options["input"];
-            if (Path.GetFullPath(input).Equals(Path.GetFullPath(output!), StringComparison.OrdinalIgnoreCase))
+            if (PlatformPaths.SamePath(input, output!))
                 throw new ArgumentException("Input and output paths must be different.");
             uint psn = UInt(options.GetValueOrDefault("psn", "0x100000"), "psn");
             bool validPsn = psn >= BluRayDiscParameters.FirstLayer0PhysicalSector && psn <= 0x00CA73E0;
@@ -157,7 +157,7 @@ public sealed class BluRayDiscModule : IOpticalDiscModule
         if (isPicture)
         {
             string input = options["input"];
-            if (Path.GetFullPath(input).Equals(Path.GetFullPath(output!), StringComparison.OrdinalIgnoreCase))
+            if (PlatformPaths.SamePath(input, output!))
                 throw new ArgumentException("Input and output paths must be different.");
             generationInvert = options.TryGetValue("invert", out string? polarity)
                 ? Boolean(polarity, "invert") : preset.InvertMapping;

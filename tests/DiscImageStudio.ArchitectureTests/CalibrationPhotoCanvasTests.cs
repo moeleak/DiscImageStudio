@@ -1,30 +1,22 @@
 using System.Collections.ObjectModel;
-using System.Runtime.ExceptionServices;
-using System.Windows;
+using System.Runtime.InteropServices;
 using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
+using Avalonia;
+using Avalonia.Media.Imaging;
 using DiscImageStudio.Controls;
+using DiscImageStudio.Hosting;
+using DiscImageStudio.Imaging;
 
 internal static class CalibrationPhotoCanvasTests
 {
     internal static void Run()
     {
-        Exception? error = null;
-        var thread = new Thread(() =>
+        AvaloniaTestHost.Run(() =>
         {
-            try
-            {
-                TestPhotoBoundaryEditing();
-                TestRectifiedCurveEditing();
-                TestPreviewAndOpenPrediction();
-            }
-            catch (Exception exception) { error = exception; }
+            TestPhotoBoundaryEditing();
+            TestRectifiedCurveEditing();
+            TestPreviewAndOpenPrediction();
         });
-        thread.SetApartmentState(ApartmentState.STA);
-        thread.Start();
-        thread.Join();
-        if (error is not null) ExceptionDispatchInfo.Capture(error).Throw();
         Console.WriteLine("calibration-photo-canvas: passed (photo pixels, corrected mm, boundary drag, single-curve editing, read-only previews)");
     }
 
@@ -132,8 +124,8 @@ internal static class CalibrationPhotoCanvasTests
         canvas.CompleteDrag();
         Near(moved, Position(points[^1]), "drag edits use mm and survive the VM's reordered sample indices");
         canvas.RemoveSelectedTracePoint();
-        Require(points.Count == 2 && points.All(p => (Position(p) - moved).Length > 1e-8), "Delete follows the moved sample after radius-based reindexing");
-        Require(points.Any(p => (Position(p) - new Point(42, 9)).Length < 1e-8), "Delete does not remove the point that inherited the old index");
+        Require(points.Count == 2 && points.All(p => Point.Distance(Position(p), moved) > 1e-8), "Delete follows the moved sample after radius-based reindexing");
+        Require(points.Any(p => Point.Distance(Position(p), new Point(42, 9)) < 1e-8), "Delete does not remove the point that inherited the old index");
 
         var prior = points.ToArray();
         canvas.BeginDragAt(canvas.WorldToView(Position(points[0])));
@@ -159,27 +151,20 @@ internal static class CalibrationPhotoCanvasTests
         canvas.IsPhotoStep = false;
         canvas.Image = Bitmap(840, 840);
         canvas.PredictionContours = [[new(-30, 0), new(-10, -20), new(10, 0)]];
-        canvas.UpdateLayout();
-        var bitmap = new RenderTargetBitmap(900, 700, 96, 96, PixelFormats.Pbgra32);
-        bitmap.Render(canvas);
+        using var bitmap = Render(canvas);
         Require(HasPredictionNear(bitmap, canvas.WorldToView(new Point(-20, -10))), "full predicted curve is drawn over the corrected photo");
         Require(!HasPredictionNear(bitmap, canvas.WorldToView(new Point(-10, 0))), "predicted curve is open and never gains an invented closing segment");
         canvas.ShowPrediction = false;
-        canvas.UpdateLayout();
-        var hidden = new RenderTargetBitmap(900, 700, 96, 96, PixelFormats.Pbgra32);
-        hidden.Render(canvas);
+        using var hidden = Render(canvas);
         Require(!HasPredictionNear(hidden, canvas.WorldToView(new Point(-20, -10))), "prediction overlay can be hidden to inspect the real photo");
         canvas.TracePoints = [new(0, 0, -30, 0), new(0, 2, -10, -20), new(0, 1, 10, 0)];
-        canvas.UpdateLayout();
-        var inserted = new RenderTargetBitmap(900, 700, 96, 96, PixelFormats.Pbgra32);
-        inserted.Render(canvas);
+        using var inserted = Render(canvas);
         Require(HasColorNear(inserted, canvas.WorldToView(new Point(-20, -10)), cyan: true),
             "inserted samples connect in the supplied curve order, independent of stable editing IDs");
         Require(!HasColorNear(inserted, canvas.WorldToView(new Point(-10, 0)), cyan: true),
             "stable IDs do not reconnect an inserted sample in its original creation order");
         canvas.Image = null;
-        canvas.UpdateLayout();
-        new RenderTargetBitmap(900, 700, 96, 96, PixelFormats.Pbgra32).Render(canvas);
+        Render(canvas).Dispose();
         Require(!canvas.BeginDragAt(new Point(450, 350)), "the no-photo concentric-cross placeholder is a read-only preview");
     }
 
@@ -188,31 +173,35 @@ internal static class CalibrationPhotoCanvasTests
         var canvas = new CalibrationPhotoCanvas { CanvasRadiusMm = 63 };
         canvas.Measure(new Size(900, 700));
         canvas.Arrange(new Rect(0, 0, 900, 700));
-        canvas.UpdateLayout();
         return canvas;
     }
-    private static BitmapSource Bitmap(int width, int height)
+    private static Bitmap Bitmap(int width, int height)
+        => AvaloniaBitmaps.ToBitmap(new Gray8Image(width, height, new byte[width * height]))!;
+    private static RenderTargetBitmap Render(CalibrationPhotoCanvas canvas)
     {
-        var bitmap = BitmapSource.Create(width, height, 96, 96, PixelFormats.Gray8, null, new byte[width * height], width);
-        bitmap.Freeze();
+        var bitmap = new RenderTargetBitmap(new PixelSize(900, 700));
+        bitmap.Render(canvas);
         return bitmap;
     }
     private static Point Position(CalibrationTracePoint point) => new(point.XMm, point.YMm);
-    private static bool HasPredictionNear(BitmapSource bitmap, Point point) => HasColorNear(bitmap, point, cyan: false);
-    private static bool HasColorNear(BitmapSource bitmap, Point point, bool cyan)
+    private static bool HasPredictionNear(Bitmap bitmap, Point point) => HasColorNear(bitmap, point, cyan: false);
+    private static bool HasColorNear(Bitmap bitmap, Point point, bool cyan)
     {
         int x = (int)Math.Round(point.X), y = (int)Math.Round(point.Y);
         for (int dy = -2; dy <= 2; dy++)
         for (int dx = -2; dx <= 2; dx++)
         {
-            if (x + dx < 0 || y + dy < 0 || x + dx >= bitmap.PixelWidth || y + dy >= bitmap.PixelHeight) continue;
+            if (x + dx < 0 || y + dy < 0 || x + dx >= bitmap.PixelSize.Width || y + dy >= bitmap.PixelSize.Height) continue;
             var pixel = new byte[4];
-            bitmap.CopyPixels(new Int32Rect(x + dx, y + dy, 1, 1), pixel, 4, 0);
+            GCHandle handle = GCHandle.Alloc(pixel, GCHandleType.Pinned);
+            try { bitmap.CopyPixels(new PixelRect(x + dx, y + dy, 1, 1), handle.AddrOfPinnedObject(), 4, 4); }
+            finally { handle.Free(); }
             if (cyan ? pixel[0] > 180 && pixel[1] > 180 && pixel[2] < 100 : pixel[0] < 90 && pixel[1] > 80 && pixel[1] < 210 && pixel[2] > 180) return true;
         }
         return false;
     }
-    private static void Near(Point expected, Point actual, string message) => Require((expected - actual).Length < 1e-8, message);
+    private static void Near(Point expected, Point actual, string message)
+        => Require(Point.Distance(expected, actual) < 1e-8, $"{message} (expected {expected}, actual {actual})");
     private static void Require(bool condition, string message)
     {
         if (!condition) throw new InvalidOperationException($"Calibration photo canvas: {message}");

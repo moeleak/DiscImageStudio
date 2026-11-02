@@ -1,14 +1,13 @@
 using System.IO;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
 using DiscImageStudio.BluRay;
 using DiscImageStudio.Cd;
 using DiscImageStudio.Core;
 using DiscImageStudio.Dvd;
 using DiscImageStudio.ViewModels;
 using DvdImageSolver.Solver;
+using DiscImageStudio.Imaging;
 
 internal static class ToneTests
 {
@@ -389,24 +388,12 @@ internal static class ToneTests
             }
         }
 
-        BitmapSource bitmap = BitmapSource.Create(
-            size, size, 96, 96, PixelFormats.Bgra32, null, pixels, stride);
-        PngBitmapEncoder encoder = new();
-        encoder.Frames.Add(BitmapFrame.Create(bitmap));
-        using FileStream output = File.Create(path);
-        encoder.Save(output);
+        TestImages.SaveBgraPng(path, size, size, pixels);
     }
 
     private static byte[] ReadPngPixels(string path)
     {
-        using FileStream input = File.OpenRead(path);
-        BitmapFrame frame = BitmapFrame.Create(
-            input, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad);
-        FormatConvertedBitmap converted = new(frame, PixelFormats.Bgra32, null, 0);
-        int stride = checked(converted.PixelWidth * 4);
-        byte[] pixels = new byte[checked(stride * converted.PixelHeight)];
-        converted.CopyPixels(pixels, stride, 0);
-        return pixels;
+        return TestImages.ReadBgra(path);
     }
 
     private static void True(bool condition, string name)

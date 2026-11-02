@@ -2,14 +2,13 @@
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text.Json.Nodes;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
 using DiscImageStudio.Cd;
 using DiscImageStudio.Core;
 using DiscImageStudio.Core.Calibration;
 using DiscImageStudio.Dvd;
 using DiscImageStudio.Services;
 using DvdImageSolver.Solver;
+using DiscImageStudio.Imaging;
 
 internal static class CalibrationEncoderTests
 {
@@ -52,13 +51,9 @@ internal static class CalibrationEncoderTests
             "the embedded PNG is byte-for-byte the user's target_slim.png");
         string originalPath = Path.Combine(directory, "target_slim.png");
         File.WriteAllBytes(originalPath, original);
-        using var source = new MemoryStream(original);
-        BitmapDecoder decoder = BitmapDecoder.Create(source, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad);
-        BitmapSource frame = decoder.Frames[0];
-        Require(frame.PixelWidth == 2400 && frame.PixelHeight == 2400, "the reference retains its original 2400-pixel dimensions");
-        var bitmap = new FormatConvertedBitmap(frame, PixelFormats.Bgra32, null, 0);
-        byte[] colors = new byte[2400 * 2400 * 4];
-        bitmap.CopyPixels(colors, 2400 * 4, 0);
+        Bgra32Image frame = ImageCodec.Decode(original);
+        Require(frame.Width == 2400 && frame.Height == 2400, "the reference retains its original 2400-pixel dimensions");
+        byte[] colors = frame.Pixels;
         byte[] gray = CalibrationReferencePattern.ReadGrayPixels();
         Require(gray.Any(value => value is > 0 and < 255), "the original antialiasing is retained without thresholding");
         for (int index = 0; index < gray.Length; index++)
@@ -75,9 +70,8 @@ internal static class CalibrationEncoderTests
                 kind == CalibrationDiscKind.Cd ? 1200 : kind == CalibrationDiscKind.BluRay ? 74.5 : 133.33);
             CalibrationTarget target = CalibrationTarget.Create(parameters);
             double centre = kind == CalibrationDiscKind.Cd ? 1200 : 1199.5;
-            BitmapSource exported = (BitmapSource)export.Invoke(null, [target, CancellationToken.None])!;
-            byte[] actual = new byte[gray.Length];
-            exported.CopyPixels(actual, 2400, 0);
+            Gray8Image exported = (Gray8Image)export.Invoke(null, [target, CancellationToken.None])!;
+            byte[] actual = exported.Pixels;
             for (int y = 0; y < 2400; y++)
             for (int x = 0; x < 2400; x++)
             {
@@ -92,18 +86,12 @@ internal static class CalibrationEncoderTests
             }
             string exportedPath = Path.Combine(directory, $"reference-export-{kind}.png");
             renderer.GetMethod("SavePng", BindingFlags.Static | BindingFlags.NonPublic)!.Invoke(null, [exported, exportedPath]);
-            using (FileStream file = File.OpenRead(exportedPath))
-            {
-                BitmapSource reopened = BitmapDecoder.Create(file, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad).Frames[0];
-                byte[] reopenedPixels = new byte[gray.Length];
-                reopened.CopyPixels(reopenedPixels, 2400, 0);
-                Require(reopenedPixels.SequenceEqual(actual), "saving the cropped PNG preserves its pixels");
-            }
+            byte[] reopenedPixels = TestImages.ReadGray(ImageCodec.Decode(exportedPath));
+            Require(reopenedPixels.SequenceEqual(actual), "saving the cropped PNG preserves its pixels");
             // A larger physical display canvas must not affect the picture's encoding scale.
             const int previewSize = 600;
-            BitmapSource preview = (BitmapSource)render.Invoke(null, [target, 60.0, previewSize, null, 0.0, CancellationToken.None])!;
-            byte[] previewPixels = new byte[previewSize * previewSize];
-            preview.CopyPixels(previewPixels, previewSize, 0);
+            Gray8Image preview = (Gray8Image)render.Invoke(null, [target, 60.0, previewSize, null, 0.0, CancellationToken.None])!;
+            byte[] previewPixels = preview.Pixels;
             for (int y = 0; y < previewSize; y++)
             for (int x = 0; x < previewSize; x++)
             {
@@ -433,11 +421,7 @@ internal static class CalibrationEncoderTests
             }
         }
 
-        BitmapSource bitmap = BitmapSource.Create(ImageSize, ImageSize, 96, 96, PixelFormats.Bgra32, null, pixels, stride);
-        PngBitmapEncoder encoder = new();
-        encoder.Frames.Add(BitmapFrame.Create(bitmap));
-        using FileStream file = File.Create(path);
-        encoder.Save(file);
+        TestImages.SaveBgraPng(path, ImageSize, ImageSize, pixels);
     }
 
     private static void ThrowsCancelled(Action action)

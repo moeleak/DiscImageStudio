@@ -2,8 +2,6 @@ using System.Buffers.Binary;
 using System.IO;
 using System.Text;
 using System.Text.Json;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
 using DiscImageStudio.Dvd;
 using DiscImageStudio.Iso;
 using DvdImageSolver;
@@ -262,11 +260,7 @@ internal static class DvdFilePlacementTests
             pixels[i * 4] = pixels[i * 4 + 1] = pixels[i * 4 + 2] = gray;
             pixels[i * 4 + 3] = 255;
         }
-        BitmapSource bitmap = BitmapSource.Create(32, 32, 96, 96, PixelFormats.Bgra32, null, pixels, 128);
-        PngBitmapEncoder encoder = new();
-        encoder.Frames.Add(BitmapFrame.Create(bitmap));
-        using FileStream file = File.Create(path);
-        encoder.Save(file);
+        TestImages.SaveBgraPng(path, 32, 32, pixels);
     }
 
     private static void Require(bool condition, string message)

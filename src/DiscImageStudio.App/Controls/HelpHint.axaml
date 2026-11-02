@@ -1,0 +1,36 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="DiscImageStudio.Controls.HelpHint">
+    <!-- 20px circular help hotspot: hover lights the glyph and ring, the hint sentence shows
+         as its tooltip. Transitions read DynamicResource values, so they follow theme switches. -->
+    <UserControl.Styles>
+        <Style Selector="Border#HelpCircle">
+            <Setter Property="Opacity" Value="0" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.15" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="TextBlock#HelpGlyph">
+            <Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="Foreground" Duration="0:0:0.15" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Grid#Root:pointerover Border#HelpCircle">
+            <Setter Property="Opacity" Value="1" />
+        </Style>
+        <Style Selector="Grid#Root:pointerover TextBlock#HelpGlyph">
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        </Style>
+    </UserControl.Styles>
+    <Grid x:Name="Root" Width="20" Height="20" Background="Transparent" Cursor="Hand"
+          ToolTip.ShowDelay="150">
+        <Border x:Name="HelpCircle" CornerRadius="10" Background="{DynamicResource PrimarySoftBrush}" />
+        <TextBlock x:Name="HelpGlyph" Text="?" FontSize="14" TextAlignment="Center"
+                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+    </Grid>
+</UserControl>

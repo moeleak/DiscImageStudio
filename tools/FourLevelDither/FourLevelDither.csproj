@@ -1,15 +1,28 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <!-- Standalone black/white dither tool (Avalonia; Windows, Linux and macOS). -->
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net10.0-windows</TargetFramework>
-    <UseWPF>true</UseWPF>
+    <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <InvariantGlobalization>false</InvariantGlobalization>
     <AssemblyName>FourLevelDither</AssemblyName>
     <RootNamespace>DiscImageStudio.DitherTool</RootNamespace>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
     <ApplicationIcon>../../src/DiscImageStudio.App/Assets/DiscImageStudio.ico</ApplicationIcon>
   </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="$(AvaloniaVersion)" />
+    <PackageReference Include="Avalonia.Desktop" Version="$(AvaloniaVersion)" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="$(AvaloniaVersion)" />
+    <PackageReference Include="Avalonia.Headless" Version="$(AvaloniaVersion)" />
+  </ItemGroup>
+  <ItemGroup>
+    <AvaloniaResource Include="../../src/DiscImageStudio.App/Assets/Fonts/HarmonyOS_Sans_SC_Regular.ttf" Link="Assets/Fonts/HarmonyOS_Sans_SC_Regular.ttf" />
+    <AvaloniaResource Include="../../src/DiscImageStudio.App/Assets/Fonts/HarmonyOS_Sans_SC_Medium.ttf" Link="Assets/Fonts/HarmonyOS_Sans_SC_Medium.ttf" />
+    <AvaloniaResource Include="../../src/DiscImageStudio.App/Assets/Fonts/HarmonyOS_Sans_SC_Bold.ttf" Link="Assets/Fonts/HarmonyOS_Sans_SC_Bold.ttf" />
+  </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../../src/DiscImageStudio.Core/DiscImageStudio.Core.csproj" />
     <ProjectReference Include="../../src/DiscImageStudio.Imaging/DiscImageStudio.Imaging.csproj" />

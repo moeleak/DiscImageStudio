@@ -1,7 +1,5 @@
 using System.IO;
 using System.Text.Json;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
 using DvdImageSolver;
 
 internal static class FourLevelPreviewTests
@@ -109,23 +107,12 @@ internal static class FourLevelPreviewTests
     {
         const int size = 65;
         byte[] pixels = Enumerable.Repeat(luminance, size * size).ToArray();
-        BitmapSource bitmap = BitmapSource.Create(size, size, 96, 96, PixelFormats.Gray8, null, pixels, size);
-        PngBitmapEncoder encoder = new();
-        encoder.Frames.Add(BitmapFrame.Create(bitmap));
-        using FileStream output = File.Create(path);
-        encoder.Save(output);
+        TestImages.SaveGray8Png(path, size, size, pixels);
     }
 
     private static byte[] ReadBgraPixels(string path)
     {
-        using FileStream input = File.OpenRead(path);
-        BitmapSource frame = BitmapDecoder.Create(input, BitmapCreateOptions.PreservePixelFormat,
-            BitmapCacheOption.OnLoad).Frames[0];
-        FormatConvertedBitmap bitmap = new(frame, PixelFormats.Bgra32, null, 0);
-        int stride = bitmap.PixelWidth * 4;
-        byte[] pixels = new byte[stride * bitmap.PixelHeight];
-        bitmap.CopyPixels(pixels, stride, 0);
-        return pixels;
+        return TestImages.ReadBgra(path);
     }
 
     private static void Require(bool condition, string message)

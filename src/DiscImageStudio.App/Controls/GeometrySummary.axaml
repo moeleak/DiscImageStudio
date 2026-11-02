@@ -1,0 +1,23 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="using:DiscImageStudio.Controls"
+             x:Class="DiscImageStudio.Controls.GeometrySummary">
+    <!-- Read-only view of a value group with a jump to its single owner. -->
+    <Border Background="{DynamicResource Surface2Brush}" BorderBrush="{DynamicResource DividerBrush}"
+            BorderThickness="1" CornerRadius="{StaticResource RadiusPanel}" Padding="12,10">
+        <Grid RowDefinitions="Auto,Auto,Auto">
+            <Grid ColumnDefinitions="*,Auto">
+                <StackPanel Orientation="Horizontal">
+                    <controls:LucideIcon Kind="Ruler" Width="15" Height="15" VerticalAlignment="Center"
+                                         Foreground="{DynamicResource TextSecondaryBrush}" />
+                    <TextBlock x:Name="TitleText" Theme="{StaticResource FieldLabel}" Margin="8,0,0,0"
+                               VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                </StackPanel>
+                <Button x:Name="EditButton" Grid.Column="1" Theme="{StaticResource CompactButton}"
+                        VerticalAlignment="Center" Margin="12,0,0,0" />
+            </Grid>
+            <TextBlock x:Name="DetailsText" Grid.Row="1" Theme="{StaticResource CompactText}" Margin="0,2,0,0" />
+            <TextBlock x:Name="PitchText" Grid.Row="2" Theme="{StaticResource CompactHint}" Margin="0,4,0,0" IsVisible="False" />
+        </Grid>
+    </Border>
+</UserControl>

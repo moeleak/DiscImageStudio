@@ -1,57 +1,34 @@
-using System.Windows;
-using System.Windows.Controls;
+using Avalonia;
+using Avalonia.Controls;
 
 namespace DiscImageStudio.Controls;
 
-public enum StepCardState
-{
-    /// <summary>Not reachable yet; the body is collapsed and the chip reads 待开始.</summary>
-    Pending,
-
-    /// <summary>The step the user is on; chip reads 进行中 with the primary color.</summary>
-    Active,
-
-    /// <summary>Finished; chip reads 已完成 with the success color and the dot becomes a check.</summary>
-    Done,
-}
-
-/// <summary>Numbered step card for guided workflows (the calibration workspace's three-stage
-/// column): a state chip beside the title and a collapsible body. The owning view model
-/// expands the active step and collapses the others, so the column reads as one progressive
-/// disclosure instead of three always-open forms; the user can still toggle any step.</summary>
+/// <summary>Numbered step card for guided workflows: a state chip beside the title and a
+/// collapsible body. State drives the :active / :done pseudo-classes used by its theme.</summary>
 public class StepCard : Expander
 {
-    public static readonly DependencyProperty StepNumberProperty = DependencyProperty.Register(
-        nameof(StepNumber), typeof(int), typeof(StepCard), new PropertyMetadata(1));
+    public static readonly StyledProperty<int> StepNumberProperty =
+        AvaloniaProperty.Register<StepCard, int>(nameof(StepNumber), 1);
+    public static readonly StyledProperty<string> StepTitleProperty =
+        AvaloniaProperty.Register<StepCard, string>(nameof(StepTitle), string.Empty);
+    public static readonly StyledProperty<StepCardState> StateProperty =
+        AvaloniaProperty.Register<StepCard, StepCardState>(nameof(State), StepCardState.Pending);
 
-    public static readonly DependencyProperty StepTitleProperty = DependencyProperty.Register(
-        nameof(StepTitle), typeof(string), typeof(StepCard), new PropertyMetadata(string.Empty));
+    public StepCard() => UpdateState();
 
-    public static readonly DependencyProperty StateProperty = DependencyProperty.Register(
-        nameof(State), typeof(StepCardState), typeof(StepCard), new PropertyMetadata(StepCardState.Pending));
+    public int StepNumber { get => GetValue(StepNumberProperty); set => SetValue(StepNumberProperty, value); }
+    public string StepTitle { get => GetValue(StepTitleProperty); set => SetValue(StepTitleProperty, value); }
+    public StepCardState State { get => GetValue(StateProperty); set => SetValue(StateProperty, value); }
 
-    static StepCard()
+    protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {
-        DefaultStyleKeyProperty.OverrideMetadata(
-            typeof(StepCard),
-            new FrameworkPropertyMetadata(typeof(StepCard)));
+        base.OnPropertyChanged(change);
+        if (change.Property == StateProperty) UpdateState();
     }
 
-    public int StepNumber
+    private void UpdateState()
     {
-        get => (int)GetValue(StepNumberProperty);
-        set => SetValue(StepNumberProperty, value);
-    }
-
-    public string StepTitle
-    {
-        get => (string)GetValue(StepTitleProperty);
-        set => SetValue(StepTitleProperty, value);
-    }
-
-    public StepCardState State
-    {
-        get => (StepCardState)GetValue(StateProperty);
-        set => SetValue(StateProperty, value);
+        PseudoClasses.Set(":active", State == StepCardState.Active);
+        PseudoClasses.Set(":done", State == StepCardState.Done);
     }
 }

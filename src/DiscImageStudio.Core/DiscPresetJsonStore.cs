@@ -94,10 +94,7 @@ public static class DiscPresetJsonStore
     };
 
     public static string GetDefaultPath()
-        => Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "DiscImageStudio",
-            FileName);
+        => Path.Combine(PlatformPaths.ApplicationData, FileName);
 
     public static DiscPresetJsonDocument LoadBuiltIn()
     {

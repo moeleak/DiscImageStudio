@@ -1,7 +1,5 @@
 using System.IO;
 using System.Text.Json;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
 using DiscImageStudio.Core;
 using DiscImageStudio.Dvd;
 using DvdImageSolver;
@@ -128,11 +126,7 @@ internal static class DvdCubicPipelineTests
         byte[] pixels = new byte[size * size];
         for (int y = 0; y < size; y++)
         for (int x = 0; x < size; x++) pixels[y * size + x] = x > 32 && y < 44 ? (byte)0 : (byte)255;
-        var bitmap = BitmapSource.Create(size, size, 96, 96, PixelFormats.Gray8, null, pixels, size);
-        PngBitmapEncoder encoder = new();
-        encoder.Frames.Add(BitmapFrame.Create(bitmap));
-        using FileStream file = File.Create(path);
-        encoder.Save(file);
+        TestImages.SaveGray8Png(path, size, size, pixels);
     }
 
     private static void Throws(Action action, string label)

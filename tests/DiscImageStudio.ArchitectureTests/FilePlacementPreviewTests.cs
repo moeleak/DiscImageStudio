@@ -2,19 +2,30 @@ using System.IO;
 using System.Reflection;
 using System.Runtime.ExceptionServices;
 using System.Text.Json;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Threading;
 using DiscImageStudio.BluRay;
 using DiscImageStudio.Cd;
 using DiscImageStudio.Core;
 using DiscImageStudio.Dvd;
+using DiscImageStudio.Imaging;
 using DiscImageStudio.Services;
 using DiscImageStudio.ViewModels;
 
 internal static class FilePlacementPreviewTests
 {
     private static readonly Color Yellow = Color.FromRgb(250, 204, 21);
+    private static TestUiDispatcher? _dispatcher;
+
+    private readonly record struct Color(byte A, byte R, byte G, byte B)
+    {
+        public static Color FromRgb(byte r, byte g, byte b) => new(255, r, g, b);
+        public static Color FromArgb(byte a, byte r, byte g, byte b) => new(a, r, g, b);
+    }
+
+    private static class Colors
+    {
+        public static Color Black => Color.FromRgb(0, 0, 0);
+        public static Color Red => Color.FromRgb(255, 0, 0);
+    }
     private static readonly DateTimeOffset Timestamp = new(2026, 10, 26, 0, 0, 0, TimeSpan.Zero);
 
     internal static void Run()
@@ -25,7 +36,6 @@ internal static class FilePlacementPreviewTests
             try { RunOnSta(); }
             catch (Exception exception) { error = exception; }
         });
-        thread.SetApartmentState(ApartmentState.STA);
         thread.Start();
         thread.Join();
         if (error is not null) ExceptionDispatchInfo.Capture(error).Throw();
@@ -37,7 +47,8 @@ internal static class FilePlacementPreviewTests
         string directory = Path.Combine(Path.GetTempPath(), "file-preview-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(directory);
         SynchronizationContext? previous = SynchronizationContext.Current;
-        SynchronizationContext.SetSynchronizationContext(new DispatcherSynchronizationContext());
+        _dispatcher = new TestUiDispatcher();
+        SynchronizationContext.SetSynchronizationContext(_dispatcher);
         ShellViewModel? shell = null;
         try
         {
@@ -49,7 +60,7 @@ internal static class FilePlacementPreviewTests
             VerifyCubicGeometry(directory);
             VerifyReadbackRange(directory);
 
-            shell = new ShellViewModel(Dispatcher.CurrentDispatcher);
+            shell = new ShellViewModel(_dispatcher);
             VerifyCdPreview(shell, directory, source, files);
             VerifyDvdPreview(shell, directory, source, files);
             VerifyBluRayPreview(shell, directory, source, files);
@@ -101,15 +112,15 @@ internal static class FilePlacementPreviewTests
             RunPreview(preview);
             RequirePreview(preview, true, $"CD {(outer ? "outer" : "inner")} design projection");
             CdDataLayoutPlan plan = CdDataImageGenerator.PrepareLayout(files, disc, filesAtOuterRing: outer);
-            BitmapSource projection = preview.ResultImage!;
+            Bgra32Image projection = preview.ResultImage!;
             double drawingMiddle = disc.RadiusFromByte(
                 ((long)plan.DrawingStartLba + plan.DrawingEndLbaExclusive) * CdDiscParameters.BytesPerSector / 2);
             double fileRadius = disc.RadiusFromByte((outer
                 ? (long)plan.DrawingEndLbaExclusive + disc.Sectors
                 : plan.DrawingStartLba) * CdDiscParameters.BytesPerSector / 2);
             Color SampleCd(double radius)
-                => Sample(projection, (int)Math.Round(projection.PixelWidth / 2.0
-                    + radius * projection.PixelWidth / (2 * disc.ImageOuterRadiusMm)), projection.PixelHeight / 2);
+                => Sample(projection, (int)Math.Round(projection.Width / 2.0
+                    + radius * projection.Width / (2 * disc.ImageOuterRadiusMm)), projection.Height / 2);
             Require(SampleCd(fileRadius) == Yellow, "CD overlay follows CD image radius and pixel centre");
             Require(SampleCd(drawingMiddle) != Yellow, "CD drawing retains its physical range");
 
@@ -295,7 +306,7 @@ internal static class FilePlacementPreviewTests
         double areaEstimate = Math.Sqrt((24 * 24 + 58 * 58) / 2.0);
         Require(Math.Abs(exact - areaEstimate) > 1, "cubic test separates exact geometry from area approximation");
         FileRegionPreviewOverlay.ApplyDvd(path, actual, 2048, 4096);
-        BitmapSource bitmap = ReadPng(path);
+        Bgra32Image bitmap = ReadPng(path);
         Require(SampleRadius(bitmap, 24 + .5, dvd: true) == Yellow, "DVD inner file area is yellow");
         Require(SampleRadius(bitmap, exact + .5, dvd: true) == Colors.Red, "DVD drawing keeps its original pixels");
         double distinguishingRadius = (exact + areaEstimate) / 2;
@@ -320,7 +331,7 @@ internal static class FilePlacementPreviewTests
         byte[] original = File.ReadAllBytes(iso);
         BluRayPreviewRenderer.RenderReadback(iso, png, disc, 256,
             drawingStartSector: 256, drawingEndSectorExclusive: 768);
-        BitmapSource before = ReadPng(png);
+        Bgra32Image before = ReadPng(png);
         double fileRadius = new BluRayTrackGeometry(disc).AtSector(900).RadiusMm;
         double drawingRadius = new BluRayTrackGeometry(disc).AtSector(500).RadiusMm;
         Require(SampleRadius(before, fileRadius, dvd: false) == Color.FromRgb(128, 128, 128),
@@ -328,7 +339,7 @@ internal static class FilePlacementPreviewTests
         Require(SampleRadius(before, drawingRadius, dvd: false) == Colors.Black,
             "BD readback still classifies drawing payload normally");
         FileRegionPreviewOverlay.ApplyBluRay(png, disc, 256, 768);
-        BitmapSource after = ReadPng(png);
+        Bgra32Image after = ReadPng(png);
         Require(SampleRadius(after, fileRadius, dvd: false) == Yellow
             && SampleRadius(after, drawingRadius, dvd: false) == Colors.Black,
             "BD readback overlays only occupied regions");
@@ -352,12 +363,7 @@ internal static class FilePlacementPreviewTests
         FieldInfo revision = typeof(LivePreviewViewModel).GetField("_livePreviewRevision", BindingFlags.Instance | BindingFlags.NonPublic)!;
         revision.SetValue(preview, (int)revision.GetValue(preview)! + 1);
         Task task = (Task)Invoke(preview, "RefreshAsync", [])!;
-        DispatcherFrame frame = new();
-        Dispatcher dispatcher = Dispatcher.CurrentDispatcher;
-        _ = task.ContinueWith(_ => dispatcher.BeginInvoke(new Action(() => frame.Continue = false)),
-            CancellationToken.None, TaskContinuationOptions.None, TaskScheduler.Default);
-        if (!task.IsCompleted) Dispatcher.PushFrame(frame);
-        task.GetAwaiter().GetResult();
+        _dispatcher!.PumpUntil(task);
     }
 
     private static object? Invoke(object target, string name, object?[] arguments)
@@ -369,7 +375,7 @@ internal static class FilePlacementPreviewTests
     {
         Require(preview.HasResultImage && preview.StatusText.StartsWith("已实时更新"), context + ": " + preview.StatusText);
         Require(preview.HasFileRegionOverlay == yellow, context + " legend visibility");
-        BitmapSource bitmap = preview.ResultImage!;
+        Bgra32Image bitmap = preview.ResultImage!;
         byte[] pixels = Pixels(bitmap);
         int yellowPixels = 0;
         for (int i = 0; i < pixels.Length; i += 4)
@@ -377,47 +383,26 @@ internal static class FilePlacementPreviewTests
         Require(yellow ? yellowPixels > 10 : yellowPixels == 0, context + " rendered yellow file pixels");
     }
 
-    private static Color SampleRadius(BitmapSource bitmap, double radius, bool dvd)
+    private static Color SampleRadius(Bgra32Image bitmap, double radius, bool dvd)
     {
-        double centre = (bitmap.PixelWidth - 1) / 2.0;
-        int x = (int)Math.Round(centre + radius * (dvd ? bitmap.PixelWidth - 1 : bitmap.PixelWidth) / 116);
+        double centre = (bitmap.Width - 1) / 2.0;
+        int x = (int)Math.Round(centre + radius * (dvd ? bitmap.Width - 1 : bitmap.Width) / 116);
         return Sample(bitmap, x, (int)Math.Round(centre));
     }
 
-    private static Color Sample(BitmapSource bitmap, int x, int y)
+    private static Color Sample(Bgra32Image bitmap, int x, int y)
     {
-        byte[] bytes = Pixels(bitmap);
-        int offset = (y * bitmap.PixelWidth + x) * 4;
+        byte[] bytes = bitmap.Pixels;
+        int offset = (y * bitmap.Width + x) * 4;
         return Color.FromArgb(bytes[offset + 3], bytes[offset + 2], bytes[offset + 1], bytes[offset]);
     }
 
-    private static byte[] Pixels(BitmapSource bitmap)
-    {
-        if (bitmap.Format != PixelFormats.Bgra32) bitmap = new FormatConvertedBitmap(bitmap, PixelFormats.Bgra32, null, 0);
-        byte[] pixels = new byte[bitmap.PixelWidth * bitmap.PixelHeight * 4];
-        bitmap.CopyPixels(pixels, bitmap.PixelWidth * 4, 0);
-        return pixels;
-    }
+    private static byte[] Pixels(Bgra32Image bitmap) => bitmap.Pixels;
 
-    private static BitmapSource ReadPng(string path)
-    {
-        using FileStream stream = File.OpenRead(path);
-        return BitmapDecoder.Create(stream, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad).Frames[0];
-    }
+    private static Bgra32Image ReadPng(string path) => ImageCodec.Decode(path);
 
     private static void WritePng(string path, int size, Color color)
-    {
-        byte[] pixels = new byte[size * size * 4];
-        for (int i = 0; i < pixels.Length; i += 4)
-        {
-            pixels[i] = color.B; pixels[i + 1] = color.G; pixels[i + 2] = color.R; pixels[i + 3] = color.A;
-        }
-        BitmapSource bitmap = BitmapSource.Create(size, size, 96, 96, PixelFormats.Bgra32, null, pixels, size * 4);
-        PngBitmapEncoder encoder = new();
-        encoder.Frames.Add(BitmapFrame.Create(bitmap));
-        using FileStream stream = File.Create(path);
-        encoder.Save(stream);
-    }
+        => ImageCodec.SavePng(path, Bgra32Image.CreateSolid(size, size, color.B, color.G, color.R, color.A));
 
     private static void Require(bool condition, string message)
     {

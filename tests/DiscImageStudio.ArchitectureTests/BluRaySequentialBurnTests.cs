@@ -36,7 +36,7 @@ internal static class BluRaySequentialBurnTests
         OpticalBurnRequest request = new("fake-recorder", OpticalBurnMediaKind.BluRayData,
             plan.ContentLength, (_, _) => produced = true);
         request.Validate();
-        WindowsImapiBurner.ValidateBluRaySequentialMedia(request, BlankMedia);
+        OpticalBurnWorkflows.ValidateBluRaySequentialMedia(request, BlankMedia);
         Require(disc.TotalSectors == FullSectors && plan.TotalSectors == FullSectors,
             "geometry and the UDF plan retain the complete unformatted single-layer capacity");
         Require(request.ContentLength == FullSectors * 2048L && plan.ContentLength == disc.ContentLength,
@@ -76,14 +76,14 @@ internal static class BluRaySequentialBurnTests
             ("dual-layer physical capacity", BlankMedia with { MaximumBlocks = FullSectors * 2 }),
         ];
         foreach ((string name, BluRaySequentialMediaInfo media) in rejected)
-            Throws<InvalidOperationException>(() => WindowsImapiBurner.ValidateBluRaySequentialMedia(request, media), name);
+            Throws<InvalidOperationException>(() => OpticalBurnWorkflows.ValidateBluRaySequentialMedia(request, media), name);
 
         // A deliberately small test image is permitted on a genuine full-capacity
         // single-layer medium, without changing the disc's measured physical identity.
-        WindowsImapiBurner.ValidateBluRaySequentialMedia(request with { ContentLength = SmallSectors * 2048L }, BlankMedia);
-        Throws<InvalidOperationException>(() => WindowsImapiBurner.ValidateBluRaySequentialMedia(
+        OpticalBurnWorkflows.ValidateBluRaySequentialMedia(request with { ContentLength = SmallSectors * 2048L }, BlankMedia);
+        Throws<InvalidOperationException>(() => OpticalBurnWorkflows.ValidateBluRaySequentialMedia(
             request with { ContentLength = (FullSectors + 32L) * 2048 }, BlankMedia), "stream exceeds the physical data zone");
-        Throws<InvalidOperationException>(() => WindowsImapiBurner.ValidateBluRaySequentialMedia(
+        Throws<InvalidOperationException>(() => OpticalBurnWorkflows.ValidateBluRaySequentialMedia(
             request with { ContentLength = 33 * 2048L }, BlankMedia), "stream must fill complete 32-sector recording units");
     }
 
@@ -107,7 +107,7 @@ internal static class BluRaySequentialBurnTests
             stream.WaitUntilPrebuffered(CancellationToken.None);
             using FakeSession session = new();
             List<OpticalWriteSpeed> reportedSpeeds = [];
-            OpticalWriteSpeed actual = WindowsImapiBurner.BurnBluRay(session, stream, request,
+            OpticalWriteSpeed actual = OpticalBurnWorkflows.BurnBluRay(session, stream, request,
                 CancellationToken.None, reportWriteSpeed: reportedSpeeds.Add);
             Require(session.Operations.SequenceEqual(new[]
                 { "acquire", "read-media", "configure", "write", "flush", "close-track:1", "close-disc", "release" }),
@@ -143,7 +143,7 @@ internal static class BluRaySequentialBurnTests
             stream.WaitUntilPrebuffered(CancellationToken.None);
             IOException expected = new("Injected " + failingOperation + " failure.");
             using FakeSession session = new() { FailOperation = failingOperation, Failure = expected };
-            IOException actual = Throws<IOException>(() => WindowsImapiBurner.BurnBluRay(
+            IOException actual = Throws<IOException>(() => OpticalBurnWorkflows.BurnBluRay(
                 session, stream, request, CancellationToken.None), failingOperation + " failure");
             Require(ReferenceEquals(actual, expected), "the original device failure is preserved");
             Require(session.Operations[0] == "acquire" && session.Operations[^1] == "release"
@@ -159,24 +159,24 @@ internal static class BluRaySequentialBurnTests
         using GeneratedContentComStream rejectedStream = NewStream(rejectedRequest);
         rejectedStream.WaitUntilPrebuffered(CancellationToken.None);
         using FakeSession formatted = new() { Media = BlankMedia with { FormatStatus = 2 } };
-        Throws<InvalidOperationException>(() => WindowsImapiBurner.BurnBluRay(
+        Throws<InvalidOperationException>(() => OpticalBurnWorkflows.BurnBluRay(
             formatted, rejectedStream, rejectedRequest, CancellationToken.None), "formatted medium during burn");
         Require(formatted.Operations.SequenceEqual(new[] { "acquire", "read-media", "release" }),
             "formatted media are rejected before configuring or writing and never silently reformatted");
 
         using FakeSession acquisitionFailure = new() { FailOperation = "acquire" };
-        Throws<IOException>(() => WindowsImapiBurner.BurnBluRay(acquisitionFailure,
+        Throws<IOException>(() => OpticalBurnWorkflows.BurnBluRay(acquisitionFailure,
             rejectedStream, rejectedRequest, CancellationToken.None), "acquisition failure");
         Require(acquisitionFailure.Operations.SequenceEqual(new[] { "acquire" }),
             "the orchestrator does not release access that was never acquired");
 
         using FakeSession twoFailures = new() { FailOperation = "write", ReleaseFails = true };
-        IOException first = Throws<IOException>(() => WindowsImapiBurner.BurnBluRay(twoFailures,
+        IOException first = Throws<IOException>(() => OpticalBurnWorkflows.BurnBluRay(twoFailures,
             rejectedStream, rejectedRequest, CancellationToken.None), "write failure followed by release failure");
         Require(ReferenceEquals(first, twoFailures.Failure), "cleanup failure cannot hide the original write failure");
 
         using FakeSession releaseFailure = new() { ReleaseFails = true };
-        IOException cleanup = Throws<IOException>(() => WindowsImapiBurner.BurnBluRay(releaseFailure,
+        IOException cleanup = Throws<IOException>(() => OpticalBurnWorkflows.BurnBluRay(releaseFailure,
             rejectedStream, rejectedRequest, CancellationToken.None), "release failure after a completed write");
         Require(ReferenceEquals(cleanup, releaseFailure.ReleaseFailure), "a release error after success is still reported");
     }
@@ -189,7 +189,7 @@ internal static class BluRaySequentialBurnTests
         using CancellationTokenSource preCancelled = new();
         preCancelled.Cancel();
         using FakeSession untouched = new();
-        Throws<OperationCanceledException>(() => WindowsImapiBurner.BurnBluRay(
+        Throws<OperationCanceledException>(() => OpticalBurnWorkflows.BurnBluRay(
             untouched, stream, request, preCancelled.Token), "pre-cancelled burn");
         Require(untouched.Operations.Count == 0, "pre-cancellation performs no device operations");
 
@@ -198,7 +198,7 @@ internal static class BluRaySequentialBurnTests
         {
             DuringWrite = () => { cancel.Cancel(); cancel.Token.ThrowIfCancellationRequested(); },
         };
-        Throws<OperationCanceledException>(() => WindowsImapiBurner.BurnBluRay(
+        Throws<OperationCanceledException>(() => OpticalBurnWorkflows.BurnBluRay(
             interrupted, stream, request, cancel.Token), "cancellation during write");
         Require(interrupted.Operations.Contains("cancel") && interrupted.Operations[^1] == "release",
             "mid-write cancellation reaches the write engine and releases the recorder");
@@ -262,7 +262,7 @@ internal static class BluRaySequentialBurnTests
         formatted[2][8] = 2;
         BluRaySequentialMediaInfo formattedMedia = new BluRayMmcCommands(MediaTransport(formatted)).ReadMedia();
         Require(formattedMedia.FormatStatus == 2, "the raw format descriptor status is preserved for validation");
-        Throws<InvalidOperationException>(() => WindowsImapiBurner.ValidateBluRaySequentialMedia(
+        Throws<InvalidOperationException>(() => OpticalBurnWorkflows.ValidateBluRaySequentialMedia(
             CreateTinyRequest(), formattedMedia), "formatted response cannot pass the no-spares media validator");
     }
 

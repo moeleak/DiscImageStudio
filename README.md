@@ -4,10 +4,10 @@
 
 <h2>全能的光盘盘面可见图像生成与刻录工具</h2>
 
-Disc Image Studio 是一个运行在 Windows 的光盘盘面图像生成与刻录工具，帮助您使用**任何**刻录光驱在**任何** DVD / CD / 蓝光 光盘上刻蚀出肉眼可见的图像。
+Disc Image Studio 是一个运行在 Windows、Linux 与 macOS 的光盘盘面图像生成与刻录工具，帮助您使用**任何**刻录光驱在**任何** DVD / CD / 蓝光 光盘上刻蚀出肉眼可见的图像。
 
 ![.NET 版本](https://img.shields.io/badge/.NET-10.0-512bd4?style=flat-square)
-![运行平台](https://img.shields.io/badge/Platform-Windows%2010%2F11-0078d6?style=flat-square)
+![运行平台](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-0078d6?style=flat-square)
 ![开发语言](https://img.shields.io/badge/Language-C%23-68217A?style=flat-square)
 ![GitHub Repo size](https://img.shields.io/github/repo-size/JiaFeiMiao-K-Cat/DiscImageStudio?style=flat-square&color=3cb371)
 ![贡献欢迎](https://img.shields.io/badge/PRs-Welcome-brightgreen?style=flat-square)
@@ -41,7 +41,13 @@ Disc Image Studio 可将一张图片转换成符合 CD、DVD 与单层 BD-R 光�
 
 ## 快速开始
 
-从 [GitHub Releases](https://github.com/JiaFeiMiao-K-Cat/DiscImageStudio/releases) 下载 Release EXE，解压后直接运行；EXE 已包含 .NET 运行时。
+从 [GitHub Releases](https://github.com/JiaFeiMiao-K-Cat/DiscImageStudio/releases) 下载对应平台的包，均已包含 .NET 运行时：
+
+| 平台 | 下载 | 运行 |
+| --- | --- | --- |
+| Windows 10 2004+ / 11 x64 | `DiscImageStudio-<版本>-win-x64.exe` | 直接运行。 |
+| Linux x64 / arm64 | `DiscImageStudio-<版本>-linux-<架构>.tar.gz` | 解压后运行 `DiscImageStudio`；执行 `./install.sh` 可安装到当前用户的应用菜单。 |
+| macOS 14+（Apple 芯片 / Intel） | `DiscImageStudio-<版本>-osx-<架构>.dmg` 或 `.zip` | 拖入“应用程序”。包仅 ad-hoc 签名，首次打开请右键选择“打开”，或在“系统设置 › 隐私与安全性”中允许。 |
 
 ### 1. 新建工程
 
@@ -85,32 +91,40 @@ Disc Image Studio 提供了一套智能且精准的辅助标定流程，相较�
 ### 刻录
 
 - **镜像文件输出**：您可以导出完整 ISO / RAW 文件并使用合适的刻录软件手动刻录。
-- **即时流式刻录（实验性）**：CD、DVD 与 BD-R 边生成边刻录，不保存完整镜像；BD-R 走 MMC 顺序写入。
+- **即时流式刻录（实验性）**：CD、DVD 与 BD-R 边生成边刻录，不保存完整镜像；BD-R 走 MMC 顺序写入。Windows 使用 IMAPI2；Linux（SG_IO）与 macOS（IOKit SCSITask）直接发送 MMC 命令，尚待实机验证。
 - **不要使用非空白介质！**
 
 ### 应用形态
 
 - 双入口：不带参数将打开 GUI；带参数则进入统一命令行。
+- 跨平台界面：Avalonia UI，三个平台共用同一套界面与命令行；深浅色主题跟随系统。
 - 模块化：CD、DVD 与蓝光通过 `IOpticalDiscModule` 接入，统一命令目录与任务契约，详见[架构说明](docs/ARCHITECTURE.md)。
 
 ## 系统与设备要求
 
-- Windows 10 2004（2004/20H1，19041）及以上，或 Windows 11。
-- 构建：.NET 10 SDK（`global.json` 锁定 10.0.x）；自行构建的非自包含 GUI 需要 .NET 10 Windows 桌面运行时。Release EXE 已包含运行时，无需另行安装 .NET。
-- “即时刻录”功能需要一台 Windows 可识别的 CD / DVD / BD 刻录机与空白盘片；BD-R 需要支持顺序写入的单层空白盘。
+- Windows 10 2004（2004/20H1，19041）及以上，或 Windows 11（x64）。
+- Linux x64 / arm64（glibc），X11 或 Wayland（通过 XWayland）桌面；需要 fontconfig、libX11、libICE、libSM 等常见桌面库。
+- macOS 14 及以上（Apple 芯片或 Intel）。
+- 构建：.NET 10 SDK（`global.json` 锁定 10.0.x），三个平台均可构建与运行全部测试。Release 包已包含运行时，无需另行安装 .NET。
+- “即时刻录”需要一台 CD / DVD / BD 刻录机与空白盘片；BD-R 需要支持顺序写入的单层空白盘。
+  - Linux：当前用户需能读写 `/dev/sr*`，请加入 `cdrom` 组（Debian / Ubuntu / Fedora）或 `optical` 组（Arch）后重新登录；盘片不能处于挂载状态。
+  - Linux / macOS：只支持一次写入介质（CD-R/RW 空白盘、DVD-R / DVD+R 及其双层、BD-R），可擦写 DVD（DVD±RW、DVD-RAM）请改用导出镜像。CD 以 SAO（cue sheet）写入，导入区与目录由光驱生成。
 
 ## 构建与运行
 
-```powershell
+Windows、Linux 与 macOS 使用相同命令（PowerShell 或 bash 均可）：
+
+```shell
 dotnet build DiscImageStudio.slnx --configuration Release
 dotnet run --project src/DiscImageStudio.App --configuration Release
 ```
 
-构建回归检查：
+构建回归检查（界面测试通过 Avalonia.Headless 离屏运行，不需要显示器）：
 
-```powershell
+```shell
 dotnet run --project src/DvdImageSolver --configuration Release -- selftest
 dotnet run --project tests/DiscImageStudio.ArchitectureTests --configuration Release
+dotnet run --project src/DiscImageStudio.App --configuration Release -- ui-snapshot --tab 1 --output shot.png
 ```
 
 版本规则、CI 生成 EXE、Release 草稿检查、MSIX 打包与签名流程见[发布指南](docs/RELEASING.md)。
@@ -139,15 +153,16 @@ dotnet run --project tests/DiscImageStudio.ArchitectureTests --configuration Rel
 ```text
 src/DiscImageStudio.Core/    介质无关的模块契约、工程/预设模型、任务与命令目录
 src/DiscImageStudio.Imaging/ CD/DVD/BD 共用的图片预处理与抖动辅助
-src/DiscImageStudio.Burning/ Windows IMAPI2 设备枚举、流缓冲与安全刻录层
+src/DiscImageStudio.Burning/ 刻录层：Windows IMAPI2、Linux SG_IO 与 macOS IOKit 后端，共用 MMC 命令序列与流缓冲
 src/DiscImageStudio.Cd/      CD-DA 生成核心与 CD 模块
 src/DiscImageStudio.Dvd/     DVD 引擎适配模块
 src/DiscImageStudio.BluRay/  BD-R 几何、17PP/ECC、3T/6T 映射、流式生成与 ISO
 src/DiscImageStudio.Iso/     UDF 2.01 / ISO9660 写入器
-src/DiscImageStudio.App/     WPF GUI、统一命令行与商店资源
+src/DiscImageStudio.Presentation/ 与界面框架无关的 ViewModel、服务与统一命令行
+src/DiscImageStudio.App/     Avalonia GUI（Windows / Linux / macOS）、ui-snapshot 与商店资源
 src/DvdImageSolver/          保持隔离的 DVD 编码/求解引擎
 tests/                       无第三方测试框架的架构回归测试
-packaging/                   MSIX 清单与打包脚本
+packaging/                   各平台发布脚本（EXE、tar.gz、.app/dmg）与 MSIX 清单
 tools/                       独立辅助工具与资产生成脚本
 docs/                        架构、引擎、预设、发布等文档
 ```
@@ -182,7 +197,8 @@ CD 公共编码部分还参考了 [ECMA-130，第 2 版（CD-ROM，1996）](http
 
 ## 刻录与介质安全须知
 
-- Disc Image Studio 不安装驱动或服务；“即时刻录”功能使用了 Windows 自带的 IMAPI2，拒绝非空白介质。
+- Disc Image Studio 不安装驱动或服务；“即时刻录”在 Windows 上使用系统自带的 IMAPI2，在 Linux / macOS 上通过系统的 SCSI 直通接口（SG_IO / IOKit SCSITask）发送 MMC 命令，均拒绝非空白介质。
+- Linux / macOS 刻录后端尚未经过实机验证，界面中标注为实验性；请先用测试盘确认刻录机与介质的组合。
 - “即时刻录”功能已有部分实盘反馈，对不同设备、介质与刻录入口的验证覆盖仍有限，属于实验性功能，请只使用可报废的测试介质。刻录中断、断电或生成速度不足仍可能使盘片报废！
 - 实际可见效果取决于盘片、刻录机、固件与写入策略。
 - 混合文件夹会在开始刻录前扫描目录并固定布局；期间源文件大小改变会安全终止任务，已开始写入的盘片仍可能报废。

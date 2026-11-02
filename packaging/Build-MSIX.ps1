@@ -60,7 +60,7 @@ $packagePath = Join-Path $artifactRoot $packageFileName
 function Get-SourceSnapshot {
     $sourceFiles = Get-ChildItem -LiteralPath (Join-Path $workspaceRoot "src") -Recurse -File |
         Where-Object {
-            $_.Extension -in ".cs", ".xaml", ".csproj", ".json" -and
+            $_.Extension -in ".cs", ".axaml", ".xaml", ".csproj", ".json" -and
             $_.FullName -notmatch '[\\/](bin|obj)[\\/]'
         } |
         Sort-Object FullName

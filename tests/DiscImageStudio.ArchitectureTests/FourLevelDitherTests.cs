@@ -1,6 +1,4 @@
 using System.IO;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
 using DiscImageStudio.Imaging;
 
 internal static class FourLevelDitherTests
@@ -120,19 +118,16 @@ internal static class FourLevelDitherTests
         const int height = 11;
         byte[] input = ToBgra(Enumerable.Range(0, width * height)
             .Select(index => (byte)((index * 43) % 256)).ToArray());
-        BitmapSource source = BitmapSource.Create(width, height, 96, 96,
-            PixelFormats.Bgra32, null, input, width * 4);
-        BitmapSource processed = FourLevelDither.Process(source, CancellationToken.None);
-        Require(processed.PixelWidth == width && processed.PixelHeight == height,
+        Bgra32Image source = new(width, height, input);
+        Gray8Image processed = FourLevelDither.Process(source, CancellationToken.None);
+        Require(processed.Width == width && processed.Height == height,
             "bitmap processing preserves source dimensions");
-        Require(processed.IsFrozen && processed.Format == PixelFormats.Gray8,
-            "processed bitmaps are frozen Gray8 images for background/UI transfer");
         byte[] expected = FourLevelDither.ProcessPixels(input, width, height, CancellationToken.None);
         Require(ReadGray(processed).SequenceEqual(expected), "bitmap and raw pixel processing agree");
 
         // Gray8 is also the format of the saved output. Processing it again must
         // preserve exact levels without introducing conversion or dither changes.
-        Require(ReadGray(FourLevelDither.Process(processed, CancellationToken.None)).SequenceEqual(expected),
+        Require(ReadGray(FourLevelDither.Process(processed.ToBgra32(), CancellationToken.None)).SequenceEqual(expected),
             "processing a four-level Gray8 bitmap is idempotent");
 
         string directory = Path.Combine(Path.GetTempPath(), $"four-level-dither-{Guid.NewGuid():N}");
@@ -141,8 +136,8 @@ internal static class FourLevelDitherTests
         {
             string path = Path.Combine(directory, "four-level.png");
             FourLevelDither.SavePng(processed, path);
-            BitmapSource reloaded = FourLevelDither.LoadImage(path);
-            Require(reloaded.PixelWidth == width && reloaded.PixelHeight == height,
+            Bgra32Image reloaded = FourLevelDither.LoadImage(path);
+            Require(reloaded.Width == width && reloaded.Height == height,
                 "PNG round trip preserves dimensions");
             byte[] result = ReadGray(reloaded);
             RequirePalette(result, "saved PNG");
@@ -171,15 +166,9 @@ internal static class FourLevelDitherTests
         return pixels;
     }
 
-    private static byte[] ReadGray(BitmapSource source)
-    {
-        BitmapSource gray = source.Format == PixelFormats.Gray8
-            ? source
-            : new FormatConvertedBitmap(source, PixelFormats.Gray8, null, 0);
-        byte[] pixels = new byte[gray.PixelWidth * gray.PixelHeight];
-        gray.CopyPixels(pixels, gray.PixelWidth, 0);
-        return pixels;
-    }
+    private static byte[] ReadGray(Bgra32Image source) => TestImages.ReadGray(source);
+
+    private static byte[] ReadGray(Gray8Image source) => TestImages.ReadGray(source);
 
     private static void RequirePalette(byte[] pixels, string name)
     {

@@ -1,6 +1,6 @@
 # 黑白抖动工具
 
-独立的 Windows 图片处理程序，将原图转换为只含 **0、255** 的黑白二阶 PNG。DVD 和 CD 都使用这两档，通过黑白像素的空间混合保留明暗。可执行文件名称继续使用 `FourLevelDither.exe`，以兼容现有入口。
+独立的图片处理程序（Windows、Linux、macOS，Avalonia 界面），将原图转换为只含 **0、255** 的黑白二阶 PNG。DVD 和 CD 都使用这两档，通过黑白像素的空间混合保留明暗。可执行文件名称继续使用 `FourLevelDither`（Windows 上为 `FourLevelDither.exe`），以兼容现有入口。
 
 ## 窗口操作
 
@@ -67,4 +67,4 @@ dotnet run --project tools/FourLevelDither --configuration Release
 dotnet publish tools/FourLevelDither/FourLevelDither.csproj --configuration Release --runtime win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true --output artifacts/FourLevelDither/win-x64
 ```
 
-自包含发布的 `FourLevelDither.exe` 内置 .NET 10 运行时；直接使用非自包含构建产物时，需要安装 .NET 10 Windows 桌面运行时。
+Linux / macOS 把 `--runtime` 换成 `linux-x64`、`linux-arm64`、`osx-arm64` 或 `osx-x64`。自包含发布内置 .NET 10 运行时；直接使用非自包含构建产物时，需要安装 .NET 10 运行时。`--snapshot 输出.png` 用 Avalonia.Headless 离屏渲染整个窗口，不需要显示器。

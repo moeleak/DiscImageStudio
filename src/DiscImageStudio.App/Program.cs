@@ -1,5 +1,6 @@
-using System.IO;
 using System.Runtime.InteropServices;
+using Avalonia;
+using Avalonia.Headless;
 
 namespace DiscImageStudio;
 
@@ -10,15 +11,42 @@ internal static class Program
     {
         if (arguments.Length == 0)
         {
-            return AppHost.Run();
+            return BuildAvaloniaApp().StartWithClassicDesktopLifetime(arguments);
         }
 
         AttachToParentConsole();
-        return UnifiedCommandRunner.Run(arguments);
+        return UnifiedCommandRunner.Run(arguments,
+            (command, all) => command == "ui-snapshot" ? UiSnapshotCommand.Run(all) : null);
     }
+
+    /// <summary>Also used by the Avalonia previewer.</summary>
+    public static AppBuilder BuildAvaloniaApp()
+        => AppBuilder.Configure<App>()
+            .UsePlatformDetect()
+            .WithAppFonts()
+            .LogToTrace();
+
+    /// <summary>Off-screen Skia rendering with no display server: ui-snapshot and the UI tests.</summary>
+    internal static AppBuilder BuildHeadlessApp()
+        => AppBuilder.Configure<App>()
+            .UseSkia()
+            .UseHarfBuzz()
+            .UseHeadless(new AvaloniaHeadlessPlatformOptions { UseHeadlessDrawing = false })
+            .WithAppFonts();
+
+    /// <summary>The bundled HarmonyOS Sans SC is the default family on every platform, so
+    /// Chinese UI text never depends on which CJK fonts the system happens to have.</summary>
+    internal static AppBuilder WithAppFonts(this AppBuilder builder)
+        => builder.With(new Avalonia.Media.FontManagerOptions
+        {
+            DefaultFamilyName = AppFontFamily,
+        });
+
+    internal const string AppFontFamily = "avares://DiscImageStudio/Assets/Fonts#HarmonyOS Sans SC";
 
     private static void AttachToParentConsole()
     {
+        // A WinExe has no console of its own on Windows; elsewhere stdio is already attached.
         if (!OperatingSystem.IsWindows() || !AttachConsole(AttachParentProcess))
         {
             return;

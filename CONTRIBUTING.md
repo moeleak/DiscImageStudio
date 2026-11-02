@@ -6,7 +6,7 @@
 
 普通问题请使用 GitHub Issues 提交，并在描述中附上：
 
-- 应用版本与获取方式（源码构建 / MSIX 包），以及 Windows 版本。
+- 应用版本与获取方式（源码构建 / Release 包 / MSIX 包），以及操作系统与版本（Windows / Linux 发行版与桌面环境 / macOS）。
 - 可稳定复现的步骤、期望行为与实际行为。
 - 适用的运行日志或截图。
 
@@ -18,11 +18,11 @@
 
 ## 开发环境
 
-- Windows 10 2004+ 或 Windows 11。
+- Windows 10 2004+ / Windows 11、Linux（x64 / arm64）或 macOS 14+，均可完整构建并运行全部测试。
 - .NET 10 SDK；仓库用 `global.json` 锁定 `10.0.x`，安装后 `dotnet` 会自动匹配。
 - 测试没有第三方框架依赖，全部是仓库自带的控制台回归程序。
 
-```powershell
+```shell
 git clone <你的 fork 地址>
 cd DiscImageStudio
 dotnet build DiscImageStudio.slnx --configuration Release
@@ -50,16 +50,19 @@ dotnet run --project src/DiscImageStudio.App --configuration Release
 
 Pull Request 前必须全部通过：
 
-```powershell
+```shell
 dotnet build DiscImageStudio.slnx --configuration Release
 dotnet run --project src/DvdImageSolver --configuration Release -- selftest
 dotnet run --project tests/DiscImageStudio.ArchitectureTests --configuration Release
 ```
 
+架构测试在 Windows 上额外包含 IMAPI 与 WIC 解码对照；界面测试经 Avalonia.Headless 离屏运行，三个平台都不需要显示器。
+
 按改动内容补充验证，并在描述中写明结果：
 
 - 改动图片布局、流式刻录或盘片预设解析时，对照 [VALIDATION.md](docs/VALIDATION.md) 的对应回归项复核结论。
-- 改动 GUI 时，用屏幕外渲染截图自检关键页面，必要时更新 `docs/images/`。
+- 改动 GUI 时，用 `ui-snapshot` 离屏截图自检关键页面（深浅两种主题，必要时加 `--scale 2`），必要时更新 `docs/images/`。视图对调色板键使用 `DynamicResource`。
+- 改动刻录层时说明影响的平台；Linux / macOS 的 MMC 命令序列须在 `MmcBackendTests` 的模拟光驱中补充对应断言。
 - 延迟交织、EFMPlus、ECC 等编码链改动后，`selftest` 覆盖项不变时也请说明变化原因。
 
 ## 提交与 Pull Request

@@ -1,7 +1,5 @@
 using System.IO;
 using System.Runtime.Intrinsics;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
 using DiscImageStudio.Cd;
 
 internal static class CdSimdSamplingTests
@@ -163,12 +161,7 @@ internal static class CdSimdSamplingTests
 
     private static void WritePng(string path, int width, int height, byte[] pixels)
     {
-        BitmapSource source = BitmapSource.Create(width, height, 96, 96, PixelFormats.Bgra32,
-            null, pixels, width * 4);
-        PngBitmapEncoder encoder = new();
-        encoder.Frames.Add(BitmapFrame.Create(source));
-        using FileStream file = File.Create(path);
-        encoder.Save(file);
+        TestImages.SaveBgraPng(path, width, height, pixels);
     }
 
     private static void Require(bool condition, string message)

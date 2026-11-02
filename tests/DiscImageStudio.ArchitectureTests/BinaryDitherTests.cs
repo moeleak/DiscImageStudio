@@ -1,6 +1,4 @@
 using System.IO;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
 using DiscImageStudio.Core;
 using DiscImageStudio.Imaging;
 
@@ -69,14 +67,12 @@ internal static class BinaryDitherTests
         const int width = 19;
         const int height = 11;
         byte[] input = ToBgra(Enumerable.Range(0, width * height).Select(index => (byte)(index * 43 % 256)).ToArray());
-        BitmapSource source = BitmapSource.Create(width, height, 144, 144, PixelFormats.Bgra32, null, input, width * 4);
-        BitmapSource result = GrayscaleDither.Process(source, Levels);
+        Bgra32Image source = new(width, height, input, 144, 144);
+        Gray8Image result = GrayscaleDither.Process(source, Levels);
         byte[] expected = GrayscaleDither.ProcessPixels(input, width, height, Levels);
-        Require(result.PixelWidth == width && result.PixelHeight == height
+        Require(result.Width == width && result.Height == height
             && Math.Abs(result.DpiX - 144) < 0.01 && Math.Abs(result.DpiY - 144) < 0.01,
             "binary processing keeps image dimensions and DPI");
-        Require(result.Format == PixelFormats.Gray8 && result.IsFrozen,
-            "the binary result is a frozen Gray8 bitmap");
         Require(ReadGray(result).SequenceEqual(expected), "bitmap processing matches raw pixel processing");
 
         string directory = Path.Combine(Path.GetTempPath(), $"binary-dither-{Guid.NewGuid():N}");
@@ -85,7 +81,7 @@ internal static class BinaryDitherTests
         {
             string path = Path.Combine(directory, "binary.png");
             GrayscaleDither.SavePng(result, path, Levels);
-            BitmapSource loaded = GrayscaleDither.LoadImage(path);
+            Bgra32Image loaded = GrayscaleDither.LoadImage(path);
             byte[] actual = ReadGray(loaded);
             Require(actual.SequenceEqual(expected) && actual.All(value => value is 0 or 255),
                 "the saved PNG retains exact binary pixels");
@@ -93,7 +89,7 @@ internal static class BinaryDitherTests
                 "reopening binary output preserves every pixel");
 
             string invalidPath = Path.Combine(directory, "invalid-gray.png");
-            BitmapSource invalid = BitmapSource.Create(1, 1, 96, 96, PixelFormats.Gray8, null, new byte[] { 85 }, 1);
+            Gray8Image invalid = new(1, 1, [85]);
             bool rejected = false;
             try { GrayscaleDither.SavePng(invalid, invalidPath, Levels); }
             catch (ArgumentException) { rejected = true; }
@@ -117,13 +113,9 @@ internal static class BinaryDitherTests
         return pixels;
     }
 
-    private static byte[] ReadGray(BitmapSource source)
-    {
-        BitmapSource gray = source.Format == PixelFormats.Gray8 ? source : new FormatConvertedBitmap(source, PixelFormats.Gray8, null, 0);
-        byte[] result = new byte[gray.PixelWidth * gray.PixelHeight];
-        gray.CopyPixels(result, gray.PixelWidth, 0);
-        return result;
-    }
+    private static byte[] ReadGray(Bgra32Image source) => TestImages.ReadGray(source);
+
+    private static byte[] ReadGray(Gray8Image source) => TestImages.ReadGray(source);
 
     private static void Require(bool condition, string message)
     {

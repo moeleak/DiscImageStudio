@@ -1,0 +1,93 @@
+using System.IO;
+using DiscImageStudio.Core;
+using DiscImageStudio.Hosting;
+using DiscImageStudio.Imaging;
+using DiscImageStudio.Services;
+
+namespace DiscImageStudio.ViewModels;
+
+/// <summary>One template card on the home page: the blank project (PresetId null) or a disc
+/// preset from the editable catalog. Clicking opens the project dialog with the template
+/// preselected; the dialog remains where the parameters are confirmed.</summary>
+public sealed record HomeTemplateTile(
+    string? PresetId,
+    string Title,
+    string Detail,
+    AppIcon Icon,
+    OpticalDiscFamily Family,
+    bool IsBlank)
+{
+    public static HomeTemplateTile Blank { get; } = new(
+        null,
+        "空白工程",
+        "从默认参数开始",
+        AppIcon.SquarePen,
+        OpticalDiscFamily.CompactDisc,
+        IsBlank: true);
+
+    public string FamilyLabel => Family switch
+    {
+        OpticalDiscFamily.Dvd => "DVD",
+        OpticalDiscFamily.BluRay => "BD",
+        _ => "CD",
+    };
+
+    public string ToolTipText => string.IsNullOrWhiteSpace(Detail)
+        ? Title
+        : $"{Title}\n{Detail}";
+}
+
+/// <summary>One card in the home page's recent-project list. The thumbnail is the picture
+/// rendered into the project file at last save; a missing file degrades the card but keeps
+/// its row so the path stays discoverable.</summary>
+public sealed class RecentProjectTile
+{
+    private readonly bool _projectExists;
+
+    private RecentProjectTile(RecentProjectEntry entry, Bgra32Image? thumbnail, bool projectExists)
+    {
+        Entry = entry;
+        Thumbnail = thumbnail;
+        _projectExists = projectExists;
+    }
+
+    internal RecentProjectEntry Entry { get; }
+
+    public Bgra32Image? Thumbnail { get; }
+
+    public bool HasThumbnail => Thumbnail is not null;
+
+    public string Title => Entry.Name;
+
+    public string FamilyLabel => Entry.FamilyLabel;
+
+    public string LocationText => _projectExists
+        ? Path.GetDirectoryName(Entry.ProjectPath) ?? Entry.ProjectPath
+        : "工程文件已移动或删除";
+
+    public string ToolTipText
+        => $"{Entry.ProjectPath}\n最近打开：{Entry.LastOpenedUtc.ToLocalTime():yyyy-MM-dd HH:mm}";
+
+    internal static RecentProjectTile Create(RecentProjectEntry entry)
+    {
+        bool projectExists = File.Exists(entry.ProjectPath);
+        return new RecentProjectTile(entry, DecodeThumbnail(entry.ThumbnailPngBase64), projectExists);
+    }
+
+    private static Bgra32Image? DecodeThumbnail(string? pngBase64)
+    {
+        if (string.IsNullOrWhiteSpace(pngBase64))
+        {
+            return null;
+        }
+
+        try
+        {
+            return ImageCodec.Decode(Convert.FromBase64String(pngBase64));
+        }
+        catch (Exception)
+        {
+            return null;
+        }
+    }
+}

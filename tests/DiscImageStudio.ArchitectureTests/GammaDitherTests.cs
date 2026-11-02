@@ -1,5 +1,3 @@
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
 using DiscImageStudio.Imaging;
 
 internal static class GammaDitherTests
@@ -144,14 +142,13 @@ internal static class GammaDitherTests
     {
         const int width = 19, height = 11;
         byte[] pixels = ToBgra(Enumerable.Range(0, width * height).Select(index => (byte)(index * 43 % 256)).ToArray());
-        BitmapSource source = BitmapSource.Create(width, height, 144, 120, PixelFormats.Bgra32, null, pixels, width * 4);
-        BitmapSource result = GrayscaleDither.Process(source, Binary, linearizeSrgb: true);
-        Require(result.PixelWidth == width && result.PixelHeight == height && result.Format == PixelFormats.Gray8 && result.IsFrozen,
-            "gamma processing preserves dimensions and returns a frozen Gray8 bitmap");
+        Bgra32Image source = new(width, height, pixels, 144, 120);
+        Gray8Image result = GrayscaleDither.Process(source, Binary, linearizeSrgb: true);
+        Require(result.Width == width && result.Height == height,
+            "gamma processing preserves dimensions and returns a Gray8 image");
         Near(144, result.DpiX, 0.01, "horizontal DPI is retained");
         Near(120, result.DpiY, 0.01, "vertical DPI is retained");
-        byte[] actual = new byte[width * height];
-        result.CopyPixels(actual, width, 0);
+        byte[] actual = result.Pixels;
         Require(actual.SequenceEqual(GrayscaleDither.ProcessPixels(pixels, width, height, Binary, linearizeSrgb: true)),
             "bitmap processing forwards the enabled gamma option to the pixel path");
 

@@ -1,0 +1,278 @@
+<Window x:Class="DiscImageStudio.ProjectDialogWindow"
+        xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:DiscImageStudio.ViewModels"
+        x:DataType="vm:ProjectDialogViewModel"
+        xmlns:controls="using:DiscImageStudio.Controls"
+        Title="新建工程"
+        Width="992" Height="640"
+        WindowStartupLocation="CenterOwner"
+        CanResize="False"
+        Background="{DynamicResource BackgroundBrush}"
+        FontFamily="{StaticResource AppFontFamily}"
+        UseLayoutRounding="True">
+
+    <Window.Resources>
+        <!-- Text tab: a flat label with a 2px baseline marking the open category. -->
+        <ControlTheme x:Key="TemplateTabItem" TargetType="ListBoxItem">
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <Border Name="TabBand" Background="Transparent" BorderThickness="0,0,0,2"
+                            BorderBrush="Transparent" Padding="10,3" Margin="0,0,4,6">
+                        <ContentPresenter Name="PART_ContentPresenter" Content="{TemplateBinding Content}"
+                                          Foreground="{TemplateBinding Foreground}" FontSize="13" />
+                    </Border>
+                </ControlTemplate>
+            </Setter>
+            <Style Selector="^:selected /template/ Border#TabBand">
+                <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+            </Style>
+            <Style Selector="^:selected">
+                <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+            </Style>
+        </ControlTheme>
+        <!-- Template card: icon on top, name and geometry underneath, selection as the brand
+             outline. Fixed width so the WrapPanel reads as a grid. -->
+        <ControlTheme x:Key="TemplateCardItem" TargetType="ListBoxItem">
+            <Setter Property="Width" Value="148" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <Border Name="Card" Background="{DynamicResource Surface1Brush}"
+                            BorderBrush="{DynamicResource DividerBrush}" BorderThickness="1"
+                            CornerRadius="{StaticResource RadiusField}" Padding="10,14" Margin="0,0,10,10">
+                        <ContentPresenter Name="PART_ContentPresenter" Content="{TemplateBinding Content}"
+                                          ContentTemplate="{TemplateBinding ContentTemplate}" HorizontalAlignment="Center" />
+                    </Border>
+                </ControlTemplate>
+            </Setter>
+            <Style Selector="^:pointerover /template/ Border#Card">
+                <Setter Property="BorderBrush" Value="{DynamicResource Surface3Brush}" />
+            </Style>
+            <Style Selector="^:selected /template/ Border#Card">
+                <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+                <Setter Property="Background" Value="{DynamicResource Surface2Brush}" />
+            </Style>
+        </ControlTheme>
+    </Window.Resources>
+
+    <Grid x:Name="RootGrid">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="32" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <controls:TitleBar Grid.Row="0" ProjectTitle="{Binding DialogTitle}" />
+
+        <Grid Grid.Row="1" Margin="24,16,24,20">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <Grid Grid.Row="0">
+                <Grid.ColumnDefinitions>
+                    <!-- The template browser owns the window: a star column lets the card grid
+                         grow with the window, the details pane stays a fixed 312px inspector. -->
+                    <ColumnDefinition Width="*" MinWidth="380" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Left: presets. Create mode shows category tabs over the card grid (最近
+                     lists recently confirmed presets, the other tabs one per family); project
+                     settings keep the family fixed and list only that family's presets. -->
+                <Grid Grid.Column="0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <ListBox Grid.Row="0" ItemsSource="{Binding TemplateCategories}"
+                             SelectedIndex="{Binding TemplateCategoryIndex}"
+                             IsVisible="{Binding TemplateTabsVisible}"
+                             Background="Transparent" BorderThickness="0" Padding="0"
+                             ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                             ScrollViewer.HorizontalScrollBarVisibility="Hidden"
+                             KeyboardNavigation.TabNavigation="Once"
+                             ItemContainerTheme="{StaticResource TemplateTabItem}">
+                        <ListBox.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal" />
+                            </ItemsPanelTemplate>
+                        </ListBox.ItemsPanel>
+                    </ListBox>
+                    <StackPanel Grid.Row="0" Margin="0,0,0,6"
+                                IsVisible="{Binding EditModeVisible}">
+                        <TextBlock Theme="{StaticResource FieldLabel}" Text="换用预设" />
+                        <TextBlock Theme="{StaticResource CompactHint}" Margin="0,4,0,0"
+                                   TextWrapping="Wrap"
+                                   Text="选择其他预设会用它的几何参数覆盖当前参数，切换前会先确认。" />
+                    </StackPanel>
+                    <ListBox Grid.Row="1" ItemsSource="{Binding VisibleTemplates}"
+                             SelectedItem="{Binding SelectedTemplate}"
+                             Background="Transparent" BorderThickness="0" Padding="0,4,0,0"
+                             ScrollViewer.VerticalScrollBarVisibility="Auto"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                             KeyboardNavigation.TabNavigation="Once"
+                             ItemContainerTheme="{StaticResource TemplateCardItem}">
+                        <ListBox.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel />
+                            </ItemsPanelTemplate>
+                        </ListBox.ItemsPanel>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate x:DataType="vm:ProjectTemplateTile">
+                                <!-- Right-click removal for user presets ("自定") only; built-in
+                                     presets live in the embedded catalog. -->
+                                <StackPanel Background="Transparent" ContextRequested="Card_ContextRequested">
+                                    <Grid Margin="0,0,0,10" Height="30">
+                                        <controls:LucideIcon Kind="{Binding IconKind}"
+                                                                  Width="28" Height="28"
+                                                                  HorizontalAlignment="Center"
+                                                                  Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        <Border HorizontalAlignment="Right" VerticalAlignment="Top"
+                                                Padding="4,1" CornerRadius="{StaticResource RadiusChip}"
+                                                Background="{DynamicResource Surface3Brush}"
+                                                IsVisible="{Binding UserBadgeVisible}">
+                                            <TextBlock Text="自定" Theme="{StaticResource MicroText}" />
+                                        </Border>
+                                    </Grid>
+                                    <!-- Preset names can outrun the card: the line scrolls
+                                         while the card is hovered (the home page's recent-
+                                         project marquee) and carries the full name as a
+                                         tooltip whenever it is clipped. -->
+                                    <controls:MarqueeText Text="{Binding Title}" FontWeight="Medium"
+                                                          Margin="0,0,0,2"
+                                                          IsActive="{Binding $parent[ListBoxItem].IsPointerOver}" />
+                                    <TextBlock Text="{Binding Detail}" Theme="{StaticResource MicroText}"
+                                               TextAlignment="Center" TextWrapping="Wrap" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                    <TextBlock Grid.Row="1" Text="{Binding EmptyCategoryHint}" Theme="{StaticResource HintText}"
+                               HorizontalAlignment="Center" Margin="0,24,0,0"
+                               IsVisible="{Binding EmptyCategoryVisible}" />
+                </Grid>
+
+                <!-- Gutter between the preset column and the details pane. -->
+                <Border Grid.Column="1" Width="24" />
+
+                <!-- Right: preset details. The project name and save location belong here too —
+                     the pane is the one place that defines what will be created. -->
+                <Border Grid.Column="2" Width="312"
+                        Theme="{StaticResource CardStyle}" Padding="18">
+                    <!-- Save location is pinned to the bottom of the pane: it names the file
+                         the dialog will create, so it must stay visible while the geometry
+                         fields scroll. -->
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto">
+                            <StackPanel>
+                                <TextBlock Text="预设详细信息" Theme="{StaticResource PanelTitle}"
+                                           Margin="0,0,0,14" />
+                                <TextBlock Theme="{StaticResource FieldLabel}" Text="工程名" />
+                                <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"
+                                         MaxLength="80" />
+                                <WrapPanel Margin="0,16,0,0" VerticalAlignment="Top">
+                                    <StackPanel Width="116" Margin="0,0,12,14">
+                                        <TextBlock Theme="{StaticResource FieldLabel}" Text="内半径 r0 (mm)" />
+                                        <TextBox Text="{Binding InnerRadiusText, UpdateSourceTrigger=PropertyChanged}" />
+                                    </StackPanel>
+                                    <StackPanel Width="116" Margin="0,0,12,14">
+                                        <TextBlock Theme="{StaticResource FieldLabel}" Text="外半径 r1 (mm)" />
+                                        <TextBox Text="{Binding OuterRadiusText, UpdateSourceTrigger=PropertyChanged}" />
+                                    </StackPanel>
+                                    <StackPanel Width="116" Margin="0,0,12,14">
+                                        <TextBlock Theme="{StaticResource FieldLabel}" Text="扇区数" />
+                                        <TextBox Text="{Binding SectorsText, UpdateSourceTrigger=PropertyChanged}" />
+                                    </StackPanel>
+                                    <StackPanel Width="124" Margin="0,0,16,14"
+                                                IsVisible="{Binding IsDvdFieldsVisible}">
+                                        <TextBlock Theme="{StaticResource FieldLabel}" Text="相对一次项" />
+                                        <TextBox Text="{Binding PitchLinearText, UpdateSourceTrigger=PropertyChanged}" />
+                                    </StackPanel>
+                                    <StackPanel Width="124" Margin="0,0,16,14"
+                                                IsVisible="{Binding IsDvdFieldsVisible}">
+                                        <TextBlock Theme="{StaticResource FieldLabel}" Text="相对二次项" />
+                                        <TextBox Text="{Binding PitchQuadraticText, UpdateSourceTrigger=PropertyChanged}" />
+                                    </StackPanel>
+                                    <StackPanel Width="124" Margin="0,0,0,14"
+                                                IsVisible="{Binding IsDvdFieldsVisible}">
+                                        <TextBlock Theme="{StaticResource FieldLabel}" Text="相对三次项" />
+                                        <TextBox Text="{Binding PitchCubicText, UpdateSourceTrigger=PropertyChanged}" />
+                                    </StackPanel>
+                                    <TextBlock Theme="{StaticResource CompactHint}"
+                                               Margin="0,0,0,14" TextWrapping="Wrap"
+                                               IsVisible="{Binding IsBluRayFieldsVisible}"
+                                               Text="单层 BD-R：扇区数须为 32 的倍数，使用恒定轨距与 0° 起始角。" />
+                                </WrapPanel>
+                                <StackPanel Margin="0,0,0,4"
+                                            IsVisible="{Binding EditModeVisible}">
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                                        <TextBlock Text="盘型" Theme="{StaticResource FieldLabel}"
+                                                   VerticalAlignment="Center" Margin="0,0,8,0" />
+                                        <Border Padding="6,2" CornerRadius="{StaticResource RadiusChip}"
+                                                Background="{DynamicResource Surface3Brush}"
+                                                VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding FamilyBadge}" Theme="{StaticResource BadgeText}" />
+                                        </Border>
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Button Theme="{StaticResource CompactButton}"
+                                                Content="将此套参数保存为预设"
+                                                Command="{Binding SaveAsPresetCommand}" />
+                                        <TextBlock Text="{Binding SavedPresetMessage}"
+                                                   Theme="{StaticResource HintText}" VerticalAlignment="Center"
+                                                   Margin="10,0,0,0"
+                                                   Foreground="{DynamicResource SuccessBrush}" />
+                                    </StackPanel>
+                                </StackPanel>
+                                <TextBlock Theme="{StaticResource HintText}" Margin="0,0,0,4"
+                                           Foreground="{DynamicResource DangerBrush}" TextWrapping="Wrap"
+                                           Text="{Binding ErrorMessage}" />
+                            </StackPanel>
+                        </ScrollViewer>
+                        <StackPanel Grid.Row="1" Margin="0,14,0,0">
+                            <TextBlock Theme="{StaticResource FieldLabel}" Margin="0,0,0,6" Text="保存位置" />
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBox Text="{Binding SaveDirectory, UpdateSourceTrigger=PropertyChanged}" />
+                                <Button Grid.Column="1" Theme="{StaticResource BrowseButton}" Content="浏览…"
+                                        Command="{Binding BrowseSavePathCommand}" />
+                            </Grid>
+                            <TextBlock Theme="{StaticResource HintText}" Margin="0,8,0,0"
+                                       Text="{Binding SaveFileNameHint}" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <!-- Shared size group: both actions take the wider label's width, so the pair reads
+                 as one control instead of two differently sized buttons. -->
+            <Grid Grid.Row="1" HorizontalAlignment="Right" Margin="0,16,0,0" Grid.IsSharedSizeScope="True">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="DialogAction" />
+                    <ColumnDefinition Width="10" />
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="DialogAction" />
+                </Grid.ColumnDefinitions>
+                <Button Grid.Column="0" Theme="{StaticResource SecondaryButton}" Content="取消"
+                        Click="Cancel_Click" />
+                <Button Grid.Column="2" Theme="{StaticResource PrimaryButton}" Content="{Binding ConfirmLabel}"
+                        Command="{Binding ConfirmCommand}" />
+            </Grid>
+        </Grid>
+
+        <!-- Overwrite guard for switching presets inside project settings; covers the whole
+             dialog and takes Escape while it is open. -->
+        <controls:ConfirmModal x:Name="PresetSwitchConfirm" Grid.RowSpan="2" />
+    </Grid>
+</Window>

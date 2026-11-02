@@ -1,7 +1,5 @@
 using System.IO;
 using System.Runtime.Intrinsics;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
 using DiscImageStudio.Core;
 using DvdImageSolver.Solver;
 
@@ -525,12 +523,7 @@ internal static class DvdSimdSamplingTests
             pixels[offset + 2] = pixel.Red;
             pixels[offset + 3] = pixel.Alpha;
         }
-        BitmapSource bitmap = BitmapSource.Create(width, height, 96, 96, PixelFormats.Bgra32,
-            null, pixels, width * 4);
-        PngBitmapEncoder encoder = new();
-        encoder.Frames.Add(BitmapFrame.Create(bitmap));
-        using FileStream output = File.Create(path);
-        encoder.Save(output);
+        TestImages.SaveBgraPng(path, width, height, pixels);
     }
 
     private static void Require(bool value, string label)

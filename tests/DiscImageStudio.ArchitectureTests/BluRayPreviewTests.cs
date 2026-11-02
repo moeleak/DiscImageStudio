@@ -1,8 +1,7 @@
 using System.IO;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
 using DiscImageStudio.BluRay;
 using DiscImageStudio.Services;
+using DiscImageStudio.Imaging;
 
 internal static class BluRayPreviewTests
 {
@@ -179,24 +178,15 @@ internal static class BluRayPreviewTests
 
     private static void SaveGray(string path, byte[] pixels)
     {
-        BitmapSource bitmap = BitmapSource.Create(64, 64, 96, 96, PixelFormats.Gray8, null, pixels, 64);
-        PngBitmapEncoder encoder = new();
-        encoder.Frames.Add(BitmapFrame.Create(bitmap));
-        using FileStream stream = File.Create(path);
-        encoder.Save(stream);
+        TestImages.SaveGray8Png(path, 64, 64, pixels);
     }
 
     private static byte[] ReadBgra(string path, int size = 64)
     {
-        using FileStream stream = File.OpenRead(path);
-        BitmapSource source = BitmapDecoder.Create(stream, BitmapCreateOptions.None, BitmapCacheOption.OnLoad).Frames[0];
-        Require(source.PixelWidth == size && source.PixelHeight == size,
+        Bgra32Image source = ImageCodec.Decode(path);
+        Require(source.Width == size && source.Height == size,
             $"preview output must be exactly {size} × {size}, not silently clamped or rounded");
-        BitmapSource bitmap = source.Format == PixelFormats.Bgra32
-            ? source : new FormatConvertedBitmap(source, PixelFormats.Bgra32, null, 0);
-        byte[] pixels = new byte[size * size * 4];
-        bitmap.CopyPixels(pixels, size * 4, 0);
-        return pixels;
+        return source.Pixels;
     }
 
     private static byte Level(byte[] pixels, int x, int y, int size = 64) => pixels[(y * size + x) * 4];

@@ -1,6 +1,4 @@
 using System.IO;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
 using DiscImageStudio.Cd;
 
 internal static class CdBinaryTests
@@ -123,22 +121,12 @@ internal static class CdBinaryTests
     {
         const int size = 128;
         byte[] pixels = Enumerable.Repeat(gray, size * size).ToArray();
-        BitmapSource bitmap = BitmapSource.Create(size, size, 96, 96, PixelFormats.Gray8, null, pixels, size);
-        PngBitmapEncoder encoder = new();
-        encoder.Frames.Add(BitmapFrame.Create(bitmap));
-        using FileStream file = File.Create(path);
-        encoder.Save(file);
+        TestImages.SaveGray8Png(path, size, size, pixels);
     }
 
     private static byte[] ReadPixels(string path)
     {
-        using FileStream file = File.OpenRead(path);
-        BitmapFrame frame = BitmapFrame.Create(file, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad);
-        FormatConvertedBitmap converted = new(frame, PixelFormats.Bgra32, null, 0);
-        int stride = converted.PixelWidth * 4;
-        byte[] pixels = new byte[stride * converted.PixelHeight];
-        converted.CopyPixels(pixels, stride, 0);
-        return pixels;
+        return TestImages.ReadBgra(path);
     }
 
     private static void Require(bool condition, string name)

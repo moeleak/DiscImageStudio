@@ -31,7 +31,7 @@ internal static class BluRayFlushDiagnosticsTests
         int releases = 0;
         try
         {
-            WindowsImapiBurner.CompleteBurnCleanup(actual, warnings, () => releases++, () => releases++);
+            OpticalBurnWorkflows.CompleteBurnCleanup(actual, warnings, () => releases++, () => releases++);
             throw new InvalidOperationException("Expected cancellation with cleanup diagnostics.");
         }
         catch (OperationCanceledException combined)
@@ -60,7 +60,7 @@ internal static class BluRayFlushDiagnosticsTests
             "failure attempts one existing flush and release without retrying WRITE or closing the disc");
         try
         {
-            WindowsImapiBurner.CompleteBurnCleanup(actual, warnings, () => { }, () => { });
+            OpticalBurnWorkflows.CompleteBurnCleanup(actual, warnings, () => { }, () => { });
             throw new InvalidOperationException("Expected combined burn failure.");
         }
         catch (InvalidOperationException combined) when (ReferenceEquals(combined.InnerException, actual))
@@ -110,7 +110,7 @@ internal static class BluRayFlushDiagnosticsTests
         stream.WaitUntilPrebuffered(CancellationToken.None);
         try
         {
-            WindowsImapiBurner.BurnBluRay(session, stream, request, CancellationToken.None,
+            OpticalBurnWorkflows.BurnBluRay(session, stream, request, CancellationToken.None,
                 reportCleanupWarning: warning);
         }
         catch (Exception exception) when (expectFailure) { return exception; }

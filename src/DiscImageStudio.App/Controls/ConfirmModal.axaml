@@ -1,0 +1,32 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="using:DiscImageStudio.Controls"
+             x:Class="DiscImageStudio.Controls.ConfirmModal"
+             Focusable="False">
+    <!-- In-window confirmation card over a dimmed backdrop: the two-way burn confirmation and
+         the three-way save/discard/cancel prompt. -->
+    <Grid x:Name="Root" IsVisible="False">
+        <Rectangle Fill="{DynamicResource BackdropBrush}" />
+        <Border Width="480" HorizontalAlignment="Center" VerticalAlignment="Center"
+                Background="{DynamicResource Surface1Brush}" BorderBrush="{DynamicResource DividerBrush}" BorderThickness="1"
+                CornerRadius="{StaticResource RadiusCard}" Padding="18" BoxShadow="{StaticResource ModalShadow}">
+            <StackPanel>
+                <StackPanel Orientation="Horizontal">
+                    <controls:LucideIcon x:Name="HeaderIcon" Kind="TriangleAlert" Width="24" Height="24"
+                                         Foreground="{DynamicResource DangerBrush}" />
+                    <TextBlock x:Name="TitleText" Theme="{StaticResource CardTitle}" Margin="10,0,0,0" VerticalAlignment="Center" />
+                </StackPanel>
+                <TextBlock x:Name="MessageText" Theme="{StaticResource BodyText}" Margin="0,14,0,0"
+                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                <Grid Margin="0,24,0,0" ColumnDefinitions="*,10,*,10,*">
+                    <Button x:Name="CancelButton" Theme="{StaticResource SecondaryButton}" HorizontalAlignment="Stretch"
+                            Content="取消" Click="Cancel_Click" />
+                    <Button x:Name="NeutralButton" Grid.Column="2" Theme="{StaticResource SecondaryButton}" HorizontalAlignment="Stretch"
+                            Content="不保存" IsVisible="False" Click="Neutral_Click" />
+                    <Button x:Name="ConfirmButton" Grid.Column="4" Theme="{StaticResource DangerButton}" HorizontalAlignment="Stretch"
+                            Content="确认刻录" Click="Confirm_Click" />
+                </Grid>
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

@@ -6,10 +6,14 @@
 
 ```mermaid
 flowchart LR
-    GUI[WPF GUI / CLI] --> Imaging[DiscImageStudio.Imaging]
+    GUI[Avalonia GUI / ui-snapshot] --> Presentation[DiscImageStudio.Presentation<br/>ViewModels / CLI]
+    Presentation --> Imaging[DiscImageStudio.Imaging<br/>ImageCodec: Skia + LibTiff]
     Imaging --> Catalog[DiscModuleCatalog]
-    GUI --> Burning[DiscImageStudio.Burning]
+    Presentation --> Burning[DiscImageStudio.Burning]
     Burning --> IMAPI[Windows IMAPI2]
+    Burning --> MMC[MMC burn sequences]
+    MMC --> SGIO[Linux SG_IO]
+    MMC --> IOKit[macOS IOKit SCSITask]
     Catalog --> Contract[IOpticalDiscModule]
     Contract --> CD[DiscImageStudio.Cd]
     Contract --> DVD[DiscImageStudio.Dvd]
@@ -22,7 +26,7 @@ flowchart LR
 
 ## Core 契约
 
-`DiscImageStudio.Core` 不引用 WPF、CD、DVD 或任何具体编码器，并以 `net10.0` 为目标。
+`DiscImageStudio.Core` 不引用任何界面框架、CD、DVD 或具体编码器，并以 `net10.0` 为目标。除 Windows 专用的 IMAPI 后端外，所有项目都是跨平台的 `net10.0`；`PlatformPaths` 统一应用数据、文档与缓存目录及路径比较规则（Linux 区分大小写）。
 
 - `IOpticalDiscModule`：模块执行边界。
 - `DiscModuleDescriptor`：模块 ID、介质家族、取消能力和命令元数据。
@@ -37,13 +41,22 @@ flowchart LR
 
 盘片预设由 Core 的统一 `disc-presets.json`（schema 4）承载：`cdPresets`、`dvdPresets`、`bluRayPresets` 三组，各有独立的禁用列表。读取 schema 2/3 的旧文件时补入内置 BD 模板并在下一次保存时升级。
 
+## 界面与表示层
+
+界面分两层：
+
+- `DiscImageStudio.Presentation`（`net10.0`）持有全部 ViewModel、非可视服务（设置、最近工程/任务、临时文件、合成、标定照片、预览渲染）与统一命令行。它不引用任何界面框架：可见性是 `bool`，图片是 `Bgra32Image`/`Gray8Image`，调度经 `IUiDispatcher`，文件对话框经异步的 `IFileDialogService`，打开文件夹经 `IShellLauncher`。ViewModel 测试因此在三个平台上用 `TestUiDispatcher` 直接运行。
+- `DiscImageStudio.App`（Avalonia 12，`net10.0`，程序集名 `DiscImageStudio`）是 Windows、Linux、macOS 共用的外壳：视图、模板化控件、自绘画布、主题与 `ui-snapshot`。宿主适配集中在 `Hosting/`：`AvaloniaBitmaps` 把栅格转成 96 DPI 位图（画布按像素矩形绘制，必须一像素一 DIP）、`AvaloniaUiDispatcher`、StorageProvider 文件对话框（Linux 文件选择器按大小写匹配，过滤器同时给出大写扩展名）、`ValueConverters` 与 `TransformKeyFrameAnimator`（Avalonia 12 的关键帧不能直接动画整个 `RenderTransform`，由它按 `TransformOperations` 插值）。
+
+`WindowChromePolicy` 决定窗口外框：Windows 去掉系统标题栏、保留自绘的窗口按钮；macOS 保留红绿灯并把内容延伸进标题栏、左侧留出按钮位；Linux 使用系统窗口装饰（Wayland 下经 XWayland），自绘标题栏只保留应用菜单。
+
+`ui-snapshot` 和界面测试都用 Avalonia.Headless + Skia 离屏渲染（`Program.BuildHeadlessApp`），不需要显示服务器；`--tab`、`--theme`、`--project`、`--tone-preview`、各对话框开关与 WPF 版保持一致，`--scale` 额外模拟高 DPI。架构测试通过 `HeadlessUnitTestSession` 在专用 UI 线程上运行画布交互与绘制断言。
+
 ## 工程模型与外壳
 
 `DiscImageStudio.Core.ProjectJsonStore` 持有 `.discproj`（UTF-8 JSON，schemaVersion 2）：工程名、盘型（CD/DVD/BD）、几何（CD r0/r1/扇区；DVD 加三次轨距系数；BD 要求 32 扇区对齐、单层容量与 ≤60 mm）、图层列表、输出配置、可选的 `tone` 影调节、可选的 `bluRay` 极性节、标定记录路径和保存时渲染的缩略图。`tone` 缺省表示旧版硬阈值；schemaVersion 1 的 CD/DVD 文件读取后自动按 2 写回。BD 的 `bluRay.invertMapping` 只存在于 BD 工程，CD/DVD 携带该节会被拒绝。读写都经过校验并使用临时文件原子替换，规则与预设 JSON 一致。图层按绝对路径引用图片，不收集资源。
 
 外壳是工作区模型：起始页（无侧边栏，提供新建/打开、模板卡片与最近工程）加上五个工程工作区——设计 / 预览 / 导出 / 刻录 / 标定（`Workspace` 枚举，侧边栏顺序即工作流顺序）。每个工作区都是同一个工程的一个视角，不是各自独立的一套流程：共享一个 `DiscParametersState`，打开工程时 `ProjectSession` 把文档内容填进它，保存时再捕获回文档；预览、导出、刻录、标定对 State 的绑定因此与工程生命周期完全解耦。脏标记只跟踪会写进工程文件的 State 属性。
-
-主窗口的自定义 chrome 由 `WindowWorkArea` 约束：它在 `WM_GETMINMAXINFO` 中按当前显示器的物理工作区（含任务栏、负坐标显示器与不同 DPI）设置最大位置/尺寸，并在窗口跨屏、分辨率或 DPI 变化时重算最小尺寸；不再依赖 `SystemParameters.WindowResizeBorderThickness` 的系统主屏边距。
 
 工作流的可见性由两件外壳设施承载：页眉（`PageHeader`）标题行下方的**阶段条**（`StageBar`，设计 → 预览 → 导出 → 刻录 │ 标定，当前阶段品牌蓝高亮、已过阶段打勾弱化、任意阶段可点击直达）与页眉右槽的「下一步」按钮。二者都由窗口接线到 `NavigateTo`：窗口持有全部页面实例，在工作区变化时把 `CurrentWorkspace` 推给各页的阶段条，因此工作流在每一页都可见、可达，而不依赖侧边栏。
 
@@ -65,21 +78,27 @@ flowchart LR
 
 设计工作区（`DesignViewModel` + `DiscDesignCanvas` + `DesignComposer`）维护图层栈：图层按面板顺序存储（顶部索引 0，画布自下而上绘制，与合成顺序一致），画布以盘心为原点的毫米坐标系渲染并支持拖动/角点缩放/旋转柄；图层行是可选中列表，与画布及属性面板双向同步。图层编辑经 450 ms 防抖后由 `DesignComposer` 渲染出方形合成图（预览 2048 px，导出 8192 px）：方形中心即盘心，边长对应 2 × 画布外半径（CD 固定 57.5 mm，DVD/BD 为生成外半径）。合成图写入 State 的源图片路径，成为导出与预览的共同输入；生成 CLI 与管线对此无感知。导出与刻录两条交付路径都使用导出质量的 8192 px 合成图，因此预览验证的素材就是写入盘片的素材。页眉的「下一步」贯穿 设计 → 预览 → 导出 → 刻录，标定经侧边栏或刻录页的链接进入。
 
-设计语言集中在 `Themes/Tokens.xaml`（颜色、语义色、圆角含 `RadiusChip`/`RadiusPanel`/卡片头尾镜像弧、控件高度、`SidePanelWidth`、页面留白、浮层阴影、画布调色板）与 `Themes/Controls.xaml`（文字层级、按钮族、输入控件、列表行、披露面板、`DangerCard` 警示卡、监视器与步骤卡模板）。代码侧动画统一走 `Controls/Motion.cs` 的三档时长，自定义画布统一通过 `Controls/DiscTheme.cs` 与 `Controls/DiscRenderCore.cs` 取色与绘制盘体，不再各自内置一套调色板。`Controls.xaml` 内基于隐式样式的派生样式（`BasedOn="{StaticResource {x:Type X}}"`）必须写在隐式样式之后：前向引用不会报错，而是静默回退到 Windows 自带样式，控件会以浅色系统外观出现。需要承载页面命名内容的面板（如 `MonitorCard`）做成模板化自定义控件而不是 UserControl：UserControl 会把内容隔离进自己的名称范围，页面里 `x:Name` 的元素无法编译，快照钩子与画布接线也因此够不到它们。
+设计语言集中在 `Themes/Tokens.axaml`（颜色、语义色、圆角含 `RadiusChip`/`RadiusPanel`/卡片头尾镜像弧、控件高度、`SidePanelWidth`、页面留白、浮层阴影、画布调色板）、`Themes/Controls.axaml`（按 WPF 样式同名的 ControlTheme：文字层级、按钮族、输入控件、列表行、披露面板、`DangerCard` 警示卡）、`Themes/CustomControls.axaml`（监视器卡、步骤卡、最近工程卡模板）与 `Themes/Icons.axaml`（Lucide 图标路径，取自 MahApps.Metro.IconPacks 的字形数据并翻转为 y 向下坐标）。代码侧动画统一走 `Controls/Motion.cs` 的三档时长，自定义画布统一通过 `Controls/DiscTheme.cs` 与 `Controls/DiscRenderCore.cs` 取色与绘制盘体。Avalonia 的几条约束：隐式 `Style` 的优先级高于 ControlTheme 的 setter，所以全局样式只放颜色、尺寸留给 ControlTheme；类型选择器按 StyleKey 匹配，`LucideIcon` 的 StyleKey 是 `PathIcon`，模板里要写 `PathIcon#Name`；一个 ControlTheme 的选择器里不能出现两个 `/template/`。需要承载页面命名内容的面板（如 `MonitorCard`）做成模板化自定义控件而不是 UserControl，避免名称范围把页面里的 `x:Name` 隔开。
 
-主题切换是即时的：`Themes/Palette.Light.xaml` 覆盖 `Tokens.xaml` 的全部颜色与画刷键，`Services/ThemeResolver` 在合并字典的第 1 位插入或移除浅色层，窗口无需重建。因此视图对调色板键必须使用 `DynamicResource`（`StaticResource` 会把深色值固化在加载时刻，`ThemePaletteTests` 会拦截）；代码侧取色的控件（`SideNavItem`、`SegmentedControl`、`DiscDesignCanvas`、`CalibrationPhotoCanvas`、`JobDock`、`HelpHint`）订阅 `ThemeResolver.Changed` 并重新读取令牌。系统主题取 `HKCU\...\Themes\Personalize\AppsUseLightTheme`。
+主题切换是即时的：`Tokens.axaml` 的 `ThemeDictionaries` 同时给出 Dark 与 Light 两套颜色与画刷，Fluent 主题通过 `ColorPaletteResources` 与 `TextControl*`/`ComboBox*`/`CheckBox*` 资源别名跟随同一套令牌。设置里的“深色 / 浅色 / 跟随系统”映射到 `Application.RequestedThemeVariant`，三个平台都实时跟随系统外观。视图对调色板键必须使用 `DynamicResource`（`ThemePaletteTests` 检查两套主题键一致、视图不用 `StaticResource` 引用调色板）；代码侧取色的控件经 `ThemeValues` 按 `ActualThemeVariant` 读取令牌，并在 `ActualThemeVariantChanged` 时重绘。
 
-应用设置由 `Services/AppSettingsStore` 持久化到 `%LOCALAPPDATA%\DiscImageStudio\settings.json`（camelCase、字符串枚举、临时文件原子替换）：主题、默认工程位置和缓存位置。缺失、损坏或 schemaVersion 高于当前版本的文件回落到默认值，手工改坏的路径在 `AppSettings.Normalize` 中被丢弃；设置从不写入 `.discproj`。默认工程位置只影响新建工程对话框的初始目录，不存在时回落到系统文档目录。`Services/TempFiles` 持有可配置的缓存目录（`LivePreviewDirectory`），设计合成图、缩略图与预览图都写到这里；切换只影响新任务，清空缓存按文件名白名单（`design-composite-*`、`design-tone-*`、`design-thumbnail.png`、`cd/dvd/bd-live-*` 及其 `.png.json` sidecar）删除，绝不删除目录、工程或导出文件。设置窗口在保存前只改副本，取消或 Esc 丢弃全部编辑。
+应用设置由 `Services/AppSettingsStore` 持久化到应用数据目录下的 `DiscImageStudio/settings.json`（Windows `%LOCALAPPDATA%`、macOS `~/Library/Application Support`、Linux `$XDG_DATA_HOME` 即 `~/.local/share`；camelCase、字符串枚举、临时文件原子替换）：主题、默认工程位置和缓存位置。缺失、损坏或 schemaVersion 高于当前版本的文件回落到默认值，手工改坏的路径在 `AppSettings.Normalize` 中被丢弃；设置从不写入 `.discproj`。默认工程位置只影响新建工程对话框的初始目录，不存在时回落到系统文档目录。`Services/TempFiles` 持有可配置的缓存目录（`LivePreviewDirectory`），设计合成图、缩略图与预览图都写到这里；切换只影响新任务，清空缓存按文件名白名单（`design-composite-*`、`design-tone-*`、`design-thumbnail.png`、`cd/dvd/bd-live-*` 及其 `.png.json` sidecar）删除，绝不删除目录、工程或导出文件。设置窗口在保存前只改副本，取消或 Esc 丢弃全部编辑。
 
 ## 图片预处理层
 
-`DiscImageStudio.Imaging` 位于界面与介质编码模块之间，当前只承载 `RingImageQuality`：设计页合成图的正式生成尺寸（8192 px）常量，供设计合成、导出与刻读共用。图片到盘面的布局（缩放、居中、裁剪到内容环）由设计页的 `DesignComposer` 在 mm 画布上完成，导出/刻录/预览直接消费合成结果，不再有独立的预处理步骤。
+`DiscImageStudio.Imaging` 位于界面与介质编码模块之间。`ImageCodec` 是全仓库唯一的图片解码/编码入口：PNG、JPEG、BMP、GIF、WebP 经 SkiaSharp，TIFF 经 LibTiff.NET；只取第一帧，输出直通 alpha 的 BGRA，不做色彩管理、不应用 EXIF 方向（与原先的 WIC 解码约定一致，Windows 上由 `WicParityTests` 对照）；PNG 输出保留 pHYs 分辨率。它还承载 `RingImageQuality`：设计页合成图的正式生成尺寸（8192 px）常量，供设计合成、导出与刻读共用。图片到盘面的布局（缩放、居中、裁剪到内容环）由设计页的 `DesignComposer` 在 mm 画布上完成，导出/刻录/预览直接消费合成结果，不再有独立的预处理步骤。
 
 ## 流式刻录层
 
 CD 的 `OpticalBurnRequest.ProduceContent` 明确要求无头的 44.1 kHz、16 位、双声道小端 PCM，`ContentLength` 只计音频数据。CD 生成器的默认无头流保留旧大端输出，调用 IMAPI 时由外壳显式选择 `CdAudioByteOrder.LittleEndian`；转换在延迟交织完成后的整扇区输出处进行。文件生成根据 `.wav` / `.raw` 后缀选择格式：WAV 使用同样的小端音频数据，额外写入 44 字节 RIFF 头和同名 WAVE CUE；旧 RAW 保持大端。Windows RAW 镜像构造器实测原样保留传入字节，不负责修正字节序。详见 [CD 刻录兼容说明](CD_AUDIO_COMPATIBILITY.md)。
 
-`DiscImageStudio.Burning` 只负责 Windows IMAPI2 设备枚举、介质检查、COM `IStream` 适配、64 MiB 有界内存缓冲（开刻前预填充 32 MiB）和刻录生命周期。自动速度会在真正开始 CD/DVD 刻录时重新读取当前盘片的写入配置并选择最低值，手动选择仍保持原值；设备不报告速度时使用刻录接口的保守回退。CD/DVD 生成器仍拥有介质格式：CD 顺序产生 2352 字节音频扇区，DVD 快速算法顺序产生 2048 字节数据扇区。刻录器按需读取这些块，因此磁盘上不出现完整镜像。原文件输出入口不经过该层，失败时不会破坏原工作流。
+`DiscImageStudio.Burning` 负责设备枚举、介质检查、64 MiB 有界内存缓冲（开刻前预填充 32 MiB）和刻录生命周期。`OpticalDiscBurnerFactory` 按操作系统选择后端：
+
+- Windows：`WindowsImapiBurner`，经 IMAPI2 写 DVD、CD DAO 与顺序 BD-R（BD 的 WRITE 命令经 IMAPI 的 MMC 直通发送）。
+- Linux：`MmcOpticalDiscBurner` + `LinuxOpticalDeviceProvider`。从 `/sys/class/block/sr*` 枚举光驱，以 `O_EXCL` 独占打开 `/dev/srN`，经 `SG_IO` ioctl 发送 MMC 命令；盘片已挂载、无权限（需 cdrom/optical 组）或被占用时给出可操作的提示。
+- macOS：同一个 `MmcOpticalDiscBurner` + `MacOpticalDeviceProvider`。在 IOKit 中找到 CD/DVD/BD 服务，经 MMC 刻录用户客户端取得 SCSITaskDevice 并独占访问，每条命令一个同步 SCSITask。
+
+两个 MMC 后端共用 `Mmc/` 下与平台无关的命令序列，并都标为实验性（尚待实机验证）：BD-R 复用 Windows 的顺序 SRM 会话与写入器，速度用 SET STREAMING；DVD-R / DVD-R DL 以 DAO 写入（写入参数页 05h、按 16 扇区 ECC 块预留轨道并补零，刷新缓存后由光驱封盘），DVD+R / DVD+R DL 顺序写入后关闭轨道并封盘；CD 音轨与数据盘以 SAO 写入（cue sheet 描述导入区、150 扇区 pregap、轨道与导出区，导入区目录和 P/Q 子码由光驱生成，数据轨以 Mode 1 2048 字节交给光驱编码，与 Windows 主机编码的物理扇区相同）。光驱因正在写导入区或缓冲已满而以 02/04/07、02/04/08 拒绝的 WRITE 会重发，其余失败（含结果不确定的超时）从不自动重写。可擦写 DVD 只在 Windows 上支持。所有命令序列都由模拟光驱的测试逐条核对 CDB 与数据。自动速度会在真正开始 CD/DVD 刻录时重新读取当前盘片的写入配置并选择最低值，手动选择仍保持原值；设备不报告速度时使用刻录接口的保守回退。CD/DVD 生成器仍拥有介质格式：CD 顺序产生 2352 字节音频扇区，DVD 快速算法顺序产生 2048 字节数据扇区。刻录器按需读取这些块，因此磁盘上不出现完整镜像。原文件输出入口不经过该层，失败时不会破坏原工作流。
 
 DVD 混合文件夹模式采用两阶段顺序生成：第一阶段扫描目录，确定 ISO9660/Joliet 元数据、文件 extent 及绘图起止 LBA；第二阶段按规划的盘面顺序输出，内圈模式为“元数据 → 文件 → 图案”，外圈模式为“元数据 → 图案 → 文件”。图案按 16 扇区 ECC Block 对齐。布局计划只保存元数据，不缓存文件内容，支持不可 Seek 的流。
 

@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Name=Disc Image Studio
+GenericName=Picture Disc Burner
+GenericName[zh_CN]=光盘盘面图像工作台
+Comment=Draw pictures on CD, DVD and Blu-ray discs and burn them
+Comment[zh_CN]=全能的光盘盘面可见图像生成与刻录工作台
+Exec=disc-image-studio
+Icon=disc-image-studio
+Terminal=false
+Categories=Utility;DiscBurning;Graphics;
+Keywords=CD;DVD;Blu-ray;BD;burn;disc;picture;
+StartupWMClass=DiscImageStudio

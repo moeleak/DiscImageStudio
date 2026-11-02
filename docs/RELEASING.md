@@ -41,18 +41,36 @@ GitHub Actions 从配置读取完整版本，自动创建对应的 `vA.B.C` 或 
 
 工作流从配置读取完整版本，校验格式及对应的非空、带日期 Changelog 段，确认发布提交属于 `origin/main`，并复用 `build.yml` 的构建与回归检查。全部通过后才生成发布 EXE、对应版本标签与草稿，无需手动创建或推送标签。
 
-GitHub Actions 生成包含 .NET 运行时的 Windows x64 单文件 EXE，无需另装 .NET。打包后将最终 EXE 单独放入隔离目录运行，执行自检、两扇区 RAW/WAV 生成检查及 GUI 截图检查，确认下载单个文件即可使用，再计算 SHA-256。GitHub Release 只附加该 EXE，例如：
+GitHub Actions 在各自的系统上为五个运行时打包，全部包含 .NET 运行时：
+
+| 运行时 | 构建机 | 产物 |
+| --- | --- | --- |
+| `win-x64` | windows-latest | 单文件 EXE |
+| `linux-x64` / `linux-arm64` | ubuntu-latest / ubuntu-24.04-arm | `tar.gz`：单文件可执行程序、`.desktop`、256 px 图标、`install.sh`、LICENSE 与第三方声明 |
+| `osx-arm64` / `osx-x64` | macos-latest | ad-hoc 签名的 `.app`，分别打成 `zip`（ditto）与 `dmg`（hdiutil） |
+
+每个包都先按用户拿到的形式放进隔离目录（EXE 复制、tar.gz 解压、zip 用 ditto 解开），再运行自检、两扇区 RAW/WAV 生成、刻录后端枚举与离屏 GUI 截图检查，然后计算 SHA-256。构建机架构与目标不同（在 Apple 芯片上构建 `osx-x64`）时跳过运行检查；在 Rosetta 等仿真环境中可设 `DIS_FORCE_SMOKE=1` 强制运行。macOS 包只做 ad-hoc 签名（Apple 芯片拒绝运行未签名代码），没有 Developer ID 与公证，首次打开需要用户在 Gatekeeper 中确认。GitHub Release 附加全部包，例如：
 
 ```text
 DiscImageStudio-v1.0.27-win-x64.exe
+DiscImageStudio-v1.0.27-linux-x64.tar.gz
+DiscImageStudio-v1.0.27-linux-arm64.tar.gz
+DiscImageStudio-v1.0.27-osx-arm64.dmg / .zip
+DiscImageStudio-v1.0.27-osx-x64.dmg / .zip
+SHA256SUMS.txt
 ```
 
-SHA-256 校验值写入 Release 说明，供下载后核对。工作流使用内置 `GITHUB_TOKEN` 创建 **GitHub Release 草稿**，无需配置个人访问令牌（PAT）。预发布标签自动设置 prerelease 标志；正式标签创建正式版草稿。它不会自动公开草稿，也不会提交到 Microsoft Store 或发布自签名测试证书。
+草稿任务汇总各平台的 `SHA256SUMS-<运行时>.txt`，逐个核对下载的包后合并为 `SHA256SUMS.txt`，并把校验值写入 Release 说明，供下载后核对。工作流使用内置 `GITHUB_TOKEN` 创建 **GitHub Release 草稿**，无需配置个人访问令牌（PAT）。预发布标签自动设置 prerelease 标志；正式标签创建正式版草稿。它不会自动公开草稿，也不会提交到 Microsoft Store 或发布自签名测试证书。
 
 维护者在 GitHub 的 [Releases 页面](https://github.com/JiaFeiMiao-K-Cat/DiscImageStudio/releases) 检查草稿中的版本、发布说明、EXE 和校验值，并下载验证启动后，再手动公开。可用下列命令计算下载文件的 SHA-256，与 Release 说明中的值比较：
 
 ```powershell
 Get-FileHash .\DiscImageStudio-v1.0.27-win-x64.exe -Algorithm SHA256
+```
+
+```shell
+sha256sum -c SHA256SUMS.txt --ignore-missing   # Linux
+shasum -a 256 -c SHA256SUMS.txt --ignore-missing  # macOS
 ```
 
 ### 失败重试与更正
@@ -63,15 +81,17 @@ Get-FileHash .\DiscImageStudio-v1.0.27-win-x64.exe -Algorithm SHA256
 
 建议仓库管理员在 GitHub 配置 `main` 分支保护，要求 Pull Request 和 `build` 必需检查；为 `v*` 标签设置规则集，允许发布工作流创建标签并禁止更新、删除。工作流文件不等同于远端保护设置，这些保护需要管理员另行配置。
 
-## 本地 EXE 演练
+## 本地打包演练
 
-在仓库根目录运行与 GitHub Actions 相同的打包脚本：
+在仓库根目录运行与 GitHub Actions 相同的打包脚本（Linux / macOS 需要 PowerShell 7，`pwsh`）。每个包只能在其目标系统上打包，以便运行打包后的程序做冒烟检查：
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File packaging/Build-Release.ps1
+powershell -ExecutionPolicy Bypass -File packaging/Build-Release.ps1                 # Windows：win-x64
+pwsh packaging/Build-Release.ps1 -RuntimeIdentifier linux-x64                        # 或 linux-arm64
+pwsh packaging/Build-Release.ps1 -RuntimeIdentifier osx-arm64                        # 或 osx-x64；需要 Xcode 命令行工具
 ```
 
-脚本自动使用 `Directory.Build.props` 中的版本。例如配置为 `1.0.26` 时，输出目录为 `artifacts/release/v1.0.26/`。脚本构建并单独验证自包含 `win-x64` EXE，生成 `DiscImageStudio-v1.0.26-win-x64.exe` 和 `SHA256SUMS.txt`；校验文件供本地检查和工作流生成 Release 说明使用，不作为 Release 附件。本地演练不要求已有版本标签或 Changelog 发布段，也不会创建 GitHub Release；正式发布必须满足上面的全部检查。
+脚本自动使用 `Directory.Build.props` 中的版本。例如配置为 `1.0.26` 时，输出目录为 `artifacts/release/v1.0.26/`，各运行时的中间文件位于其下的 `<运行时>/` 子目录，重新打包只替换该运行时的产物。脚本生成对应的包（如 `DiscImageStudio-v1.0.26-win-x64.exe`）和 `SHA256SUMS-<运行时>.txt`；校验文件供本地检查和工作流汇总使用。macOS 包的 `CFBundleIdentifier` 默认为 `io.github.jiafeimiao-k-cat.discimagestudio`，可用 `-BundleIdentifier` 覆盖。本地演练不要求已有版本标签或 Changelog 发布段，也不会创建 GitHub Release；正式发布必须满足上面的全部检查。
 
 ## Microsoft Store MSIX
 

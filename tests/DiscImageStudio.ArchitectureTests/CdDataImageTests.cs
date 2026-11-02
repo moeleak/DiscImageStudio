@@ -1,8 +1,6 @@
 using System.Buffers.Binary;
 using System.IO;
 using System.Text;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
 using DiscImageStudio.Cd;
 using DiscImageStudio.Core;
 
@@ -248,11 +246,7 @@ internal static class CdDataImageTests
             pixels[index] = pixels[index + 1] = pixels[index + 2] = gray;
             pixels[index + 3] = 255;
         }
-        PngBitmapEncoder encoder = new();
-        encoder.Frames.Add(BitmapFrame.Create(BitmapSource.Create(size, size, 96, 96,
-            PixelFormats.Bgra32, null, pixels, size * 4)));
-        using FileStream output = File.Create(path);
-        encoder.Save(output);
+        TestImages.SaveBgraPng(path, size, size, pixels);
     }
 
     private sealed class ForwardOnlyStream(Stream inner) : Stream

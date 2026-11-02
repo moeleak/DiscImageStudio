@@ -1,7 +1,4 @@
 using System.IO;
-using System.Windows;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
 using DiscImageStudio.Imaging;
 
 namespace DvdGrayProbe;
@@ -21,12 +18,16 @@ internal sealed class ProbePattern
 
     public ProbePattern(string source)
     {
-        BitmapSource original = FourLevelDither.LoadImage(source);
-        if (original.PixelWidth != Size || original.PixelHeight != Size)
+        Bgra32Image original = FourLevelDither.LoadImage(source);
+        if (original.Width != Size || original.Height != Size)
             throw new ArgumentException("This experiment uses the supplied 6000 x 6000 four-level image.");
-        BitmapSource gray = new FormatConvertedBitmap(original, PixelFormats.Gray8, null, 0);
+        // The source is already neutral gray (R = G = B), so any channel is its Gray8 value.
         _crop = new byte[640 * 640];
-        gray.CopyPixels(new Int32Rect(2880, 1920, 640, 640), _crop, 640, 0);
+        for (int y = 0; y < 640; y++)
+        {
+            for (int x = 0; x < 640; x++)
+                _crop[y * 640 + x] = original.Pixels[((1920 + y) * Size + 2880 + x) * 4 + 1];
+        }
         if (_crop.Any(value => value is not (0 or 85 or 170 or 255)))
             throw new ArgumentException("The source crop must already contain only 0/85/170/255.");
         _ramp = Diffuse(640, 105, (x, _) => x / 639.0, 4);
@@ -192,10 +193,8 @@ internal sealed class ProbePattern
             int offset = (y * size + x) * 4;
             pixels[offset] = (byte)color; pixels[offset + 1] = (byte)(color >> 8); pixels[offset + 2] = (byte)(color >> 16); pixels[offset + 3] = 255;
         }
-        BitmapSource bitmap = BitmapSource.Create(size, size, 96, 96, PixelFormats.Bgra32, null, pixels, size * 4);
-        PngBitmapEncoder encoder = new();
-        encoder.Frames.Add(BitmapFrame.Create(bitmap));
+        byte[] png = ImageCodec.EncodePng(new Bgra32Image(size, size, pixels));
         using FileStream output = new(path, FileMode.CreateNew);
-        encoder.Save(output);
+        output.Write(png);
     }
 }

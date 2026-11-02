@@ -15,13 +15,31 @@ on:
 permissions:
   contents: read
 
+defaults:
+  run:
+    shell: pwsh
+
 jobs:
-  windows:
-    runs-on: windows-latest
-    timeout-minutes: 30
+  build:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: windows-x64
+            os: windows-latest
+          - name: linux-x64
+            os: ubuntu-latest
+          - name: linux-arm64
+            os: ubuntu-24.04-arm
+          - name: macos-arm64
+            os: macos-latest
     env:
       DOTNET_CLI_TELEMETRY_OPTOUT: "1"
       DOTNET_NOLOGO: "1"
+      AVALONIA_TELEMETRY_OPTOUT: "1"
 
     steps:
       - uses: actions/checkout@v4
@@ -37,11 +55,14 @@ jobs:
         run: dotnet restore DiscImageStudio.slnx
 
       - name: Validate release tooling
+        if: runner.os == 'Windows'
         run: ./tests/Test-ReleaseTooling.ps1
 
       - name: Build
         run: dotnet build DiscImageStudio.slnx --configuration Release --no-restore
 
+      # Includes the Avalonia.Headless UI tests and the simulated-drive MMC backend tests on
+      # every platform; Windows additionally runs the IMAPI and WIC parity checks.
       - name: Test module architecture
         run: dotnet run --project tests/DiscImageStudio.ArchitectureTests --configuration Release --no-build
 
@@ -52,21 +73,33 @@ jobs:
         run: dotnet run --project src/DiscImageStudio.App --configuration Release --no-build -- selftest
 
       - name: Smoke-test CD module
-        shell: powershell
         run: |
-          New-Item -ItemType Directory -Path artifacts\ci -Force | Out-Null
+          New-Item -ItemType Directory -Path artifacts/ci -Force | Out-Null
           dotnet run --project src/DiscImageStudio.App --configuration Release --no-build -- cd-generate --input src/DiscImageStudio.App/Assets/DiscImageStudio-256.png --output artifacts/ci/cd-smoke.raw --r0 24.5 --r1 24.6 --sectors 2 --velocity 1100 --theta0 0 --outer 57.5 --interleave true
           if ($LASTEXITCODE -ne 0) { throw "CD smoke generation failed." }
-          if ((Get-Item artifacts\ci\cd-smoke.raw).Length -ne 4704) {
+          if ((Get-Item artifacts/ci/cd-smoke.raw).Length -ne 4704) {
             throw "CD smoke output was not exactly two 2352-byte sectors."
           }
 
-      - name: Render GUI screenshot
-        run: dotnet run --project src/DiscImageStudio.App --configuration Release --no-build -- ui-snapshot --output artifacts/store/home-screen.png
+      # The new MMC backends (Linux SG_IO, macOS IOKit) enumerate without a drive; hosted
+      # Windows runners do not guarantee the IMAPI2 service, whose path is unchanged.
+      - name: List recorders through the platform burning backend
+        if: runner.os != 'Windows'
+        run: |
+          dotnet run --project src/DiscImageStudio.App --configuration Release --no-build -- burn-devices
+          if ($LASTEXITCODE -ne 0) { throw "burn-devices failed." }
+
+      # Avalonia.Headless renders with Skia off screen, so no display server is needed.
+      - name: Render GUI screenshots
+        run: |
+          dotnet run --project src/DiscImageStudio.App --configuration Release --no-build -- ui-snapshot --output artifacts/store/home-screen.png
+          if ($LASTEXITCODE -ne 0) { throw "ui-snapshot failed." }
+          dotnet run --project src/DiscImageStudio.App --configuration Release --no-build -- ui-snapshot --tab 5 --theme light --output artifacts/store/calibration-light.png
+          if ($LASTEXITCODE -ne 0) { throw "ui-snapshot (light) failed." }
 
       - uses: actions/upload-artifact@v4
         with:
-          name: validation-artifacts
+          name: validation-artifacts-${{ matrix.name }}
           path: |
             artifacts/ci/cd-smoke.raw
-            artifacts/store/home-screen.png
+            artifacts/store/*.png

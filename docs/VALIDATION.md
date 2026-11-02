@@ -4,6 +4,8 @@
 
 ## 本地验证
 
+跨平台迁移验证：2026-11-02，Linux arm64（Oracle Linux 9，.NET SDK 10.0.403），Release 配置。完整 solution 构建 0 警告、0 错误；架构回归全部通过，其中包括改为 Avalonia.Headless 运行的标定照片画布、设计画布缩放与主题调色板检查，以及 Linux / macOS MMC 刻录后端的模拟光驱命令序列检查（CD SAO、DVD-R DAO、DVD+R 封盘、BD 会话、忙碌重发、sysfs / mountinfo 发现、SG_IO 结构布局）；DVD 引擎自检、`cd-generate` 两扇区 4,704 字节冒烟与六个工作区及全部对话框的离屏截图通过。`Build-Release.ps1 -RuntimeIdentifier linux-arm64` 生成 tar.gz，并在解压后的隔离目录中通过刻录接口构建信息、自检、RAW/WAV/CUE、刻录机枚举与界面截图检查；发布工具 45 项检查在 PowerShell 7 下通过。Windows 与 macOS 包、Linux / macOS 实机刻录尚未在本次验证中运行。
+
 最近一次完整架构回归：2026-10-28，覆盖界面修复、标定生成优化与 Verbatim BD-R (64099) 预设（对应提交 `3088802`、`49a0e4d`、`46e2c53`），Windows、.NET SDK 10.0.400（运行时 10.0.11），Release 配置。完整 solution 构建（0 警告、0 错误）与架构回归全部通过；测试入口直接运行自研 Exe harness，不使用 `dotnet test`。
 
 标定刻录结束后已完成生成优化的构建、完整架构回归和 DVD 引擎自检。Verbatim 预设加入后再次通过构建与完整架构回归，验证 GUI 与 CLI 的半径、扇区数、极性一致，以及预设合并和命令行覆盖。v1.3.3 的版本／更新日志校验与发布工具 45 项检查通过；未新增性能测速或实盘刻录结论。

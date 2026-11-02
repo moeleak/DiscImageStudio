@@ -1,4 +1,4 @@
-using DiscImageStudio.Controls;
+using DiscImageStudio.Services;
 using System.IO;
 using System.Reflection;
 using System.Runtime.ExceptionServices;
@@ -8,10 +8,17 @@ internal static class CalibrationOutputPublisherTests
     internal static void Run()
     {
         TestCompleteReplacement();
-        TestLockedOldFileRestoresPreviousSet();
-        TestLockedStagedFileRollsBackPublishedFiles();
+        // Failure injection relies on Windows sharing violations (an open FileShare.None
+        // handle blocks rename). Unix permits renaming open files, so there is no lock to hit.
+        if (OperatingSystem.IsWindows())
+        {
+            TestLockedOldFileRestoresPreviousSet();
+            TestLockedStagedFileRollsBackPublishedFiles();
+        }
         TestPathConflictsBeforeModification();
-        Console.WriteLine("calibration-publisher: complete replacement, occupied-file rollback and path guards passed");
+        Console.WriteLine(OperatingSystem.IsWindows()
+            ? "calibration-publisher: complete replacement, occupied-file rollback and path guards passed"
+            : "calibration-publisher: complete replacement and path guards passed (occupied-file rollback is Windows-only)");
     }
 
     private static void TestCompleteReplacement()
@@ -88,7 +95,7 @@ internal static class CalibrationOutputPublisherTests
 
     private static void Publish(string staging, string destination)
     {
-        MethodInfo method = typeof(CalibrationPhotoCanvas).Assembly.GetType("DiscImageStudio.Services.CalibrationOutputPublisher", throwOnError: true)!
+        MethodInfo method = typeof(CalibrationPhotoService).Assembly.GetType("DiscImageStudio.Services.CalibrationOutputPublisher", throwOnError: true)!
             .GetMethod("Publish", BindingFlags.Static | BindingFlags.NonPublic)!;
         try { method.Invoke(null, [staging, destination]); }
         catch (TargetInvocationException error) when (error.InnerException is not null)

@@ -1,48 +1,36 @@
 using System.Diagnostics;
-using System.Windows;
-using System.Windows.Media;
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Media;
 
 namespace DiscImageStudio.Controls;
 
 /// <summary>Saved-project acknowledgement: one green segment runs once around the project
 /// header's rounded rectangle. The head follows a cubic Bezier timing curve and the tail
-/// length follows the same curve's instantaneous speed, so the trail stretches while the
-/// segment accelerates through the middle of the lap and contracts as it eases into the
-/// start again. Presentation only: never hit-testable, and the caller may skip it when the
-/// header is not on screen.</summary>
-public sealed class ProjectSaveTrail : FrameworkElement
+/// length follows the same curve's instantaneous speed. Presentation only: never
+/// hit-testable.</summary>
+public sealed class ProjectSaveTrail : Control
 {
     private const double LapDurationMs = 1150;
     private const double FadeInFraction = 0.07;
     private const double FadeOutFraction = 0.18;
     private const double SegmentCount = 30;
     private const double PathSampleStep = 1.5;
-
-    // Cubic Bezier(0.55, 0, 0.2, 1): slow start, fast middle, long settle at the end. The
-    // same curve drives progress and the derivative that scales the trail.
+    // Cubic Bezier(0.55, 0, 0.2, 1): slow start, fast middle, long settle at the end.
     private const double EaseX1 = 0.55;
     private const double EaseY1 = 0;
     private const double EaseX2 = 0.2;
     private const double EaseY2 = 1;
-
     private static readonly double PeakSpeed = ComputeMaximumSpeed();
-    private static readonly Brush DefaultStroke = CreateDefaultStroke();
 
-    public static readonly DependencyProperty StrokeProperty = DependencyProperty.Register(
-        nameof(Stroke), typeof(Brush), typeof(ProjectSaveTrail),
-        new FrameworkPropertyMetadata(DefaultStroke, FrameworkPropertyMetadataOptions.AffectsRender));
-
-    public static readonly DependencyProperty CornerRadiusProperty = DependencyProperty.Register(
-        nameof(CornerRadius), typeof(double), typeof(ProjectSaveTrail),
-        new FrameworkPropertyMetadata(8.0, FrameworkPropertyMetadataOptions.AffectsRender));
-
-    public static readonly DependencyProperty CoreThicknessProperty = DependencyProperty.Register(
-        nameof(CoreThickness), typeof(double), typeof(ProjectSaveTrail),
-        new FrameworkPropertyMetadata(2.0, FrameworkPropertyMetadataOptions.AffectsRender));
-
-    public static readonly DependencyProperty TrailLengthProperty = DependencyProperty.Register(
-        nameof(TrailLength), typeof(double), typeof(ProjectSaveTrail),
-        new FrameworkPropertyMetadata(62.0, FrameworkPropertyMetadataOptions.AffectsRender));
+    public static readonly StyledProperty<IBrush> StrokeProperty =
+        AvaloniaProperty.Register<ProjectSaveTrail, IBrush>(nameof(Stroke), new SolidColorBrush(Color.FromRgb(0x17, 0xC9, 0x64)));
+    public static readonly StyledProperty<double> CornerRadiusProperty =
+        AvaloniaProperty.Register<ProjectSaveTrail, double>(nameof(CornerRadius), 8.0);
+    public static readonly StyledProperty<double> CoreThicknessProperty =
+        AvaloniaProperty.Register<ProjectSaveTrail, double>(nameof(CoreThickness), 2.0);
+    public static readonly StyledProperty<double> TrailLengthProperty =
+        AvaloniaProperty.Register<ProjectSaveTrail, double>(nameof(TrailLength), 62.0);
 
     private readonly Stopwatch _clock = new();
     private readonly List<Point> _path = [];
@@ -61,44 +49,29 @@ public sealed class ProjectSaveTrail : FrameworkElement
     private Color _penCore;
     private double _penThickness = double.NaN;
 
+    static ProjectSaveTrail()
+    {
+        AffectsRender<ProjectSaveTrail>(StrokeProperty, CornerRadiusProperty, CoreThicknessProperty, TrailLengthProperty);
+    }
+
     public ProjectSaveTrail()
     {
         IsHitTestVisible = false;
-        SnapsToDevicePixels = true;
         SizeChanged += (_, _) => OnSizeChanged();
-        Unloaded += (_, _) => Stop();
+        DetachedFromVisualTree += (_, _) => Stop();
     }
 
-    public Brush Stroke
-    {
-        get => (Brush)GetValue(StrokeProperty);
-        set => SetValue(StrokeProperty, value);
-    }
+    public IBrush Stroke { get => GetValue(StrokeProperty); set => SetValue(StrokeProperty, value); }
+    public double CornerRadius { get => GetValue(CornerRadiusProperty); set => SetValue(CornerRadiusProperty, value); }
+    public double CoreThickness { get => GetValue(CoreThicknessProperty); set => SetValue(CoreThicknessProperty, value); }
 
-    public double CornerRadius
-    {
-        get => (double)GetValue(CornerRadiusProperty);
-        set => SetValue(CornerRadiusProperty, value);
-    }
-
-    public double CoreThickness
-    {
-        get => (double)GetValue(CoreThicknessProperty);
-        set => SetValue(CoreThicknessProperty, value);
-    }
-
-    /// <summary>Length of the tail at full speed; the curve scales it down as the head
-    /// slows near the start and the end of the lap.</summary>
-    public double TrailLength
-    {
-        get => (double)GetValue(TrailLengthProperty);
-        set => SetValue(TrailLengthProperty, value);
-    }
+    /// <summary>Length of the tail at full speed.</summary>
+    public double TrailLength { get => GetValue(TrailLengthProperty); set => SetValue(TrailLengthProperty, value); }
 
     /// <summary>Runs the lap once. A second call while running restarts it.</summary>
     public void Play()
     {
-        if (RenderSize.Width <= 0 || RenderSize.Height <= 0)
+        if (Bounds.Width <= 0 || Bounds.Height <= 0)
         {
             _playPending = true;
             return;
@@ -111,7 +84,7 @@ public sealed class ProjectSaveTrail : FrameworkElement
         if (!_rendering)
         {
             _rendering = true;
-            CompositionTarget.Rendering += OnRendering;
+            TopLevel.GetTopLevel(this)?.RequestAnimationFrame(OnFrame);
         }
 
         InvalidateVisual();
@@ -119,17 +92,11 @@ public sealed class ProjectSaveTrail : FrameworkElement
 
     public void Stop()
     {
-        if (_rendering)
-        {
-            CompositionTarget.Rendering -= OnRendering;
-            _rendering = false;
-        }
-
+        _rendering = false;
         _clock.Stop();
     }
 
-    /// <summary>Snapshot hook: paints one exact frame of the lap without running the clock,
-    /// so the CLI can capture the trail deterministically.</summary>
+    /// <summary>Snapshot hook: paints one exact frame of the lap without running the clock.</summary>
     internal void ShowAt(double progress)
     {
         _playPending = false;
@@ -148,18 +115,17 @@ public sealed class ProjectSaveTrail : FrameworkElement
     private void OnSizeChanged()
     {
         _builtSize = default;
-        if (_playPending)
-        {
-            Play();
-        }
+        if (_playPending) Play();
     }
 
-    private void OnRendering(object? sender, EventArgs e)
+    private void OnFrame(TimeSpan _)
     {
+        if (!_rendering) return;
         double progress = _clock.Elapsed.TotalMilliseconds / LapDurationMs;
         if (progress >= 1)
         {
             Stop();
+            _hasSnapshot = false;
             InvalidateVisual();
             return;
         }
@@ -167,27 +133,15 @@ public sealed class ProjectSaveTrail : FrameworkElement
         _snapshotProgress = progress;
         _hasSnapshot = true;
         InvalidateVisual();
+        TopLevel.GetTopLevel(this)?.RequestAnimationFrame(OnFrame);
     }
 
-    protected override void OnRender(DrawingContext drawingContext)
+    public override void Render(DrawingContext drawingContext)
     {
-        base.OnRender(drawingContext);
-        if (RenderSize.Width <= 0 || RenderSize.Height <= 0)
-        {
-            return;
-        }
-
-        if (!_hasSnapshot)
-        {
-            return;
-        }
-
+        base.Render(drawingContext);
+        if (Bounds.Width <= 0 || Bounds.Height <= 0 || !_hasSnapshot) return;
         EnsurePath();
-        if (_totalLength <= 0 || _path.Count < 2)
-        {
-            return;
-        }
-
+        if (_totalLength <= 0 || _path.Count < 2) return;
         DrawTrail(drawingContext, _snapshotProgress);
     }
 
@@ -195,40 +149,24 @@ public sealed class ProjectSaveTrail : FrameworkElement
     {
         double eased = EaseProgress(progress);
         double fade = Fade(progress);
-        if (fade <= 0)
-        {
-            return;
-        }
-
+        if (fade <= 0) return;
         double trail = TrailLengthAt(progress, TrailLength);
         double head = eased * _totalLength;
         double tail = Math.Max(0, head - trail);
-        if (head - tail < 1)
-        {
-            return;
-        }
-
-        Color core = ResolveColor();
+        if (head - tail < 1) return;
+        Color core = Stroke is ISolidColorBrush solid ? solid.Color : Color.FromRgb(0x17, 0xC9, 0x64);
         double thickness = CoreThickness;
         EnsureBrushes(core, thickness);
-        drawingContext.PushOpacity(fade);
-
-        // Two passes: a wide low-alpha halo under a crisp core. The halo is what makes the
-        // segment read as light instead of a painted dash without a WPF blur effect.
-        DrawTail(drawingContext, tail, head, _haloPens);
-        DrawTail(drawingContext, tail, head, _corePens);
-
-        Point headPoint = PointAt(head);
-        double glowRadius = Math.Max(7, thickness * 4.5);
-        drawingContext.DrawEllipse(_glowBrush, null, headPoint, glowRadius, glowRadius);
-        drawingContext.DrawEllipse(
-            _headBrush,
-            null,
-            headPoint,
-            thickness * 1.15,
-            thickness * 1.15);
-
-        drawingContext.Pop();
+        using (drawingContext.PushOpacity(fade))
+        {
+            // A wide low-alpha halo under a crisp core reads as light without a blur effect.
+            DrawTail(drawingContext, tail, head, _haloPens);
+            DrawTail(drawingContext, tail, head, _corePens);
+            Point headPoint = PointAt(head);
+            double glowRadius = Math.Max(7, thickness * 4.5);
+            drawingContext.DrawEllipse(_glowBrush, null, headPoint, glowRadius, glowRadius);
+            drawingContext.DrawEllipse(_headBrush, null, headPoint, thickness * 1.15, thickness * 1.15);
+        }
     }
 
     private void DrawTail(DrawingContext drawingContext, double tail, double head, Pen[] pens)
@@ -244,19 +182,9 @@ public sealed class ProjectSaveTrail : FrameworkElement
 
     private void EnsureBrushes(Color core, double thickness)
     {
-        if (_corePens.Length == (int)SegmentCount && _penCore == core
-            && Math.Abs(_penThickness - thickness) < 0.001)
-        {
-            return;
-        }
-
+        if (_corePens.Length == (int)SegmentCount && _penCore == core && Math.Abs(_penThickness - thickness) < 0.001) return;
         _penCore = core;
         _penThickness = thickness;
-
-        // Quadratic ramp puts most of the opacity near the head and lets the last third
-        // dissolve, which is what makes the tail read as a trailing streak. The fade of the
-        // whole lap is a separate drawing opacity, so these pens only change when the head
-        // color or the thickness does.
         int segments = (int)SegmentCount;
         _corePens = new Pen[segments];
         _haloPens = new Pen[segments];
@@ -264,44 +192,25 @@ public sealed class ProjectSaveTrail : FrameworkElement
         {
             double t = (index + 1) / (double)segments;
             double ramp = t * t;
-            _corePens[index] = CreatePen(
-                Color.FromArgb((byte)Math.Round(core.A * ramp), core.R, core.G, core.B),
-                thickness);
-            _haloPens[index] = CreatePen(
-                Color.FromArgb((byte)Math.Round(46 * ramp), core.R, core.G, core.B),
-                thickness * 3.2);
+            _corePens[index] = new Pen(new SolidColorBrush(Color.FromArgb((byte)Math.Round(core.A * ramp), core.R, core.G, core.B)),
+                thickness, lineCap: PenLineCap.Round);
+            _haloPens[index] = new Pen(new SolidColorBrush(Color.FromArgb((byte)Math.Round(46 * ramp), core.R, core.G, core.B)),
+                thickness * 3.2, lineCap: PenLineCap.Round);
         }
 
-        RadialGradientBrush glow = new()
+        _glowBrush = new RadialGradientBrush
         {
-            GradientOrigin = new Point(0.5, 0.5),
-            Center = new Point(0.5, 0.5),
-            RadiusX = 0.5,
-            RadiusY = 0.5,
+            GradientStops =
+            {
+                new GradientStop(Color.FromArgb(120, core.R, core.G, core.B), 0),
+                new GradientStop(Color.FromArgb(42, core.R, core.G, core.B), 0.55),
+                new GradientStop(Color.FromArgb(0, core.R, core.G, core.B), 1),
+            },
         };
-        glow.GradientStops.Add(new GradientStop(Color.FromArgb(120, core.R, core.G, core.B), 0));
-        glow.GradientStops.Add(new GradientStop(Color.FromArgb(42, core.R, core.G, core.B), 0.55));
-        glow.GradientStops.Add(new GradientStop(Color.FromArgb(0, core.R, core.G, core.B), 1));
-        glow.Freeze();
-        _glowBrush = glow;
-
-        SolidColorBrush head = new(Color.FromArgb(255, core.R, core.G, core.B));
-        head.Freeze();
-        _headBrush = head;
+        _headBrush = new SolidColorBrush(Color.FromArgb(255, core.R, core.G, core.B));
     }
 
-    private static Pen CreatePen(Color color, double thickness)
-    {
-        SolidColorBrush brush = new(color);
-        brush.Freeze();
-        Pen pen = new(brush, thickness)
-        {
-            StartLineCap = PenLineCap.Round,
-            EndLineCap = PenLineCap.Round,
-        };
-        pen.Freeze();
-        return pen;
-    }
+    private static double Length(Vector vector) => vector.Length;
 
     private static double Fade(double progress)
     {
@@ -326,13 +235,13 @@ public sealed class ProjectSaveTrail : FrameworkElement
 
     private void EnsurePath()
     {
-        double radius = Math.Clamp(CornerRadius, 0, Math.Min(RenderSize.Width, RenderSize.Height) / 2);
-        if (_builtSize == RenderSize && Math.Abs(_builtRadius - radius) < 0.01 && _path.Count > 0)
+        double radius = Math.Clamp(CornerRadius, 0, Math.Min(Bounds.Width, Bounds.Height) / 2);
+        if (_builtSize == Bounds.Size && Math.Abs(_builtRadius - radius) < 0.01 && _path.Count > 0)
         {
             return;
         }
 
-        _builtSize = RenderSize;
+        _builtSize = Bounds.Size;
         _builtRadius = radius;
         _path.Clear();
         _distances.Clear();
@@ -340,8 +249,8 @@ public sealed class ProjectSaveTrail : FrameworkElement
         double inset = 1.5;
         double left = inset;
         double top = inset;
-        double right = RenderSize.Width - inset;
-        double bottom = RenderSize.Height - inset;
+        double right = Bounds.Width - inset;
+        double bottom = Bounds.Height - inset;
         if (right <= left || bottom <= top)
         {
             _totalLength = 0;
@@ -369,7 +278,7 @@ public sealed class ProjectSaveTrail : FrameworkElement
         _distances.Add(0);
         for (int index = 1; index < _path.Count; index++)
         {
-            distance += (PointAtRaw(index) - PointAtRaw(index - 1)).Length;
+            distance += Length(PointAtRaw(index) - PointAtRaw(index - 1));
             _distances.Add(distance);
         }
 
@@ -383,7 +292,7 @@ public sealed class ProjectSaveTrail : FrameworkElement
             AddPoint(from);
         }
 
-        double length = (to - from).Length;
+        double length = Length(to - from);
         int steps = Math.Max(1, (int)Math.Ceiling(length / PathSampleStep));
         for (int step = 1; step <= steps; step++)
         {
@@ -414,7 +323,7 @@ public sealed class ProjectSaveTrail : FrameworkElement
 
     private void AddPoint(Point point)
     {
-        if (_path.Count > 0 && (_path[^1] - point).Length < 0.01)
+        if (_path.Count > 0 && Length(_path[^1] - point) < 0.01)
         {
             return;
         }
@@ -467,15 +376,7 @@ public sealed class ProjectSaveTrail : FrameworkElement
 
     private Point PointAtRaw(int index) => _path[index];
 
-    private Color ResolveColor()
-        => Stroke is SolidColorBrush solid ? solid.Color : Color.FromRgb(0x17, 0xC9, 0x64);
 
-    private static Brush CreateDefaultStroke()
-    {
-        SolidColorBrush brush = new(Color.FromRgb(0x17, 0xC9, 0x64));
-        brush.Freeze();
-        return brush;
-    }
 
     /// <summary>The head's position along the lap at a linear time fraction, 0..1.</summary>
     internal static double EaseProgress(double progress)

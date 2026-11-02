@@ -2,10 +2,16 @@
 
 ## Unreleased
 
+- 支持 Linux 与 macOS：界面由 WPF 迁移到 Avalonia UI，Windows、Linux、macOS 共用同一套界面、主题与统一命令行；Windows 版界面与行为保持不变。
+- 新增 Linux（SG_IO）与 macOS（IOKit SCSITask）即时刻录后端，支持 BD-R（顺序 SRM，与 Windows 共用写入器）、DVD-R / DVD+R（含双层，DVD-R 以 DAO 写入）及 CD 音轨与数据盘（SAO，导入区由光驱生成）。两者尚待实机验证，界面标注为实验性；可擦写 DVD 仍只在 Windows 上支持。Linux 刻录需要 cdrom / optical 组权限，盘片不能处于挂载状态。
+- 图片解码与编码改用 SkiaSharp（TIFF 经 LibTiff.NET），三平台结果一致；JPEG 与 WIC 可能有 ±1 灰阶差异、设计合成改用 Skia 重采样，因此同一工程生成的 ISO / WAV 不保证与 1.3.x 逐字节相同。
+- 新增 Linux x64 / arm64（tar.gz，含 `.desktop` 与 `install.sh`）和 macOS Apple 芯片 / Intel（ad-hoc 签名的 `.app`，zip 与 dmg）发布包；CI 在 Windows、Linux x64 / arm64 与 macOS 上构建并运行全部测试。
+- `ui-snapshot` 改用 Avalonia.Headless 离屏渲染，任意平台、无显示器均可运行，并新增 `--scale` 模拟高 DPI；界面测试（画布交互、主题调色板）随架构测试在三个平台运行。
+- 黑白抖动工具 `FourLevelDither` 同步迁移到 Avalonia，可在 Linux 与 macOS 上运行。
 - 标题栏新增「…」应用菜单，提供「设置…」（Ctrl+,）与「关于…」，主页和工程态均可用；侧边栏底部的「关于」入口移除。
 - 新增设置窗口，分「通用」「存储」两类：深色／浅色／跟随系统主题保存后立即应用到所有窗口，代码绘制的侧边栏、分段控件、盘面画布与任务坞同步刷新。
 - 新增默认工程位置与缓存位置设置：默认工程位置作为新建工程对话框的初始目录，留空使用系统文档目录；缓存位置用于设计合成图、缩略图与预览图，可查看占用、清空本应用缓存文件或打开应用数据目录。清空缓存只删除白名单内的缓存图片与 sidecar，工程和导出文件不受影响，任务运行期间按钮禁用。
-- 应用设置保存在 `%LOCALAPPDATA%\DiscImageStudio\settings.json`，缺失、损坏或更高版本的文件自动回落到默认值；设置不写入 `.discproj`。
+- 应用设置保存在应用数据目录下的 `DiscImageStudio/settings.json`（Windows `%LOCALAPPDATA%`、macOS `~/Library/Application Support`、Linux `~/.local/share`），缺失、损坏或更高版本的文件自动回落到默认值；设置不写入 `.discproj`。
 - 开发截图命令 `ui-snapshot` 新增 `--theme dark|light|system`、`--settings-dialog`（默认 760×600，使用一次性设置文件，不改动真实配置）与 `--settings-view general|storage`。
 
 ## [1.3.3] - 2026-10-28

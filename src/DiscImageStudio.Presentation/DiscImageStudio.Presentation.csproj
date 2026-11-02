@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- UI-framework-free shell: view models, project/session services, stores and the
+       unified command runner. Hosts (WPF today, Avalonia next) supply IUiDispatcher,
+       IFileDialogService and IShellLauncher and convert Bgra32Image for display. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <RootNamespace>DiscImageStudio</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\DiscImageStudio.Core\DiscImageStudio.Core.csproj" />
+    <ProjectReference Include="..\DiscImageStudio.Burning\DiscImageStudio.Burning.csproj" />
+    <ProjectReference Include="..\DiscImageStudio.Imaging\DiscImageStudio.Imaging.csproj" />
+    <ProjectReference Include="..\DiscImageStudio.Cd\DiscImageStudio.Cd.csproj" />
+    <ProjectReference Include="..\DiscImageStudio.Dvd\DiscImageStudio.Dvd.csproj" />
+    <ProjectReference Include="..\DiscImageStudio.BluRay\DiscImageStudio.BluRay.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Read by AboutViewModel; available offline in every UI host. -->
+    <EmbeddedResource Include="..\..\LICENSE" LogicalName="DiscImageStudio.Licenses.GPL" />
+    <EmbeddedResource Include="..\..\THIRD-PARTY-NOTICES.txt" LogicalName="DiscImageStudio.Licenses.ThirdParty" />
+    <EmbeddedResource Include="..\DiscImageStudio.App\Assets\Fonts\HarmonyOS-Sans-LICENSE.txt" LogicalName="DiscImageStudio.Licenses.HarmonyOS" />
+  </ItemGroup>
+</Project>

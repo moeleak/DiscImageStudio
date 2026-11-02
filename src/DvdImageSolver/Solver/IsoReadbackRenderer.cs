@@ -1,5 +1,4 @@
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
+using DiscImageStudio.Imaging;
 using DvdImageSolver.Encoding;
 
 namespace DvdImageSolver.Solver;
@@ -216,25 +215,12 @@ internal static class IsoReadbackRenderer
 
     private static void WritePng(string outputPath, int size, byte[] pixels, int stride)
     {
-        string? directory = Path.GetDirectoryName(outputPath);
-        if (directory is not null)
+        if (stride != checked(size * 4))
         {
-            Directory.CreateDirectory(directory);
+            throw new ArgumentException("Preview pixels must be tightly packed BGRA.", nameof(stride));
         }
 
-        BitmapSource bitmap = BitmapSource.Create(
-            size,
-            size,
-            96,
-            96,
-            PixelFormats.Bgra32,
-            palette: null,
-            pixels,
-            stride);
-        PngBitmapEncoder encoder = new();
-        encoder.Frames.Add(BitmapFrame.Create(bitmap));
-        using FileStream output = new(outputPath, FileMode.Create, FileAccess.Write, FileShare.None);
-        encoder.Save(output);
+        ImageCodec.SavePng(outputPath, new Bgra32Image(size, size, pixels));
     }
 
     private static void Validate(IsoReadbackOptions options)

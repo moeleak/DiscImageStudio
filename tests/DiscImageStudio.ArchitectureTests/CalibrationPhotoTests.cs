@@ -1,9 +1,8 @@
 using System.IO;
 using System.Text.Json;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
 using DiscImageStudio.Core.Calibration;
 using DiscImageStudio.Services;
+using DiscImageStudio.Imaging;
 
 internal static class CalibrationPhotoTests
 {
@@ -103,12 +102,11 @@ internal static class CalibrationPhotoTests
 
     private static void TestPhotoPixelsAndLoading()
     {
-        BitmapSource source = Gradient(320, 240);
+        Bgra32Image source = Gradient(320, 240);
         var transform = new CalibrationPhotoTransform([2, 0.35, 160, -0.25, 1.4, 120, 0.002, -0.0015, 1]);
-        BitmapSource corrected = CalibrationPhotoService.Rectify(source, transform, 60, 240);
-        Require(source.IsFrozen && corrected.IsFrozen, "photos can safely cross worker and UI threads");
-        byte[] result = new byte[240 * 240 * 4];
-        corrected.CopyPixels(result, 240 * 4, 0);
+        Bgra32Image corrected = CalibrationPhotoService.Rectify(source, transform, 60, 240);
+        Require(corrected.Width == 240 && corrected.Height == 240, "rectification yields the requested square");
+        byte[] result = corrected.Pixels;
         foreach ((int x, int y) in new[] { (120, 120), (35, 70), (190, 180), (70, 205) })
         {
             CalibrationPoint mm = new((x + 0.5) * 0.5 - 60, (y + 0.5) * 0.5 - 60);
@@ -124,23 +122,20 @@ internal static class CalibrationPhotoTests
         Require(contours.Outer.Count == 8 && contours.Hole.Count == 8,
             "initial boundary handles provide both editable contours");
         Require(contours.Outer.Concat(contours.Hole).All(p => p.X >= 0 && p.Y >= 0
-                && p.X < source.PixelWidth && p.Y < source.PixelHeight), "initial handles stay inside the source image");
+                && p.X < source.Width && p.Y < source.Height), "initial handles stay inside the source image");
         string directory = Path.Combine(Path.GetTempPath(), $"disc-calibration-photo-{Guid.NewGuid():N}");
         Directory.CreateDirectory(directory);
         try
         {
-            foreach ((string name, BitmapSource image) in new[] { ("landscape", source), ("portrait", Gradient(80, 240)) })
+            foreach ((string name, Bgra32Image image) in new[] { ("landscape", source), ("portrait", Gradient(80, 240)) })
             {
                 string path = Path.Combine(directory, name + ".png");
-                var encoder = new PngBitmapEncoder();
-                encoder.Frames.Add(BitmapFrame.Create(image));
-                using (FileStream file = File.Create(path)) encoder.Save(file);
-                BitmapSource loaded = CalibrationPhotoService.Load(path, 128);
-                Require(loaded.IsFrozen && Math.Max(loaded.PixelWidth, loaded.PixelHeight) == 128,
+                ImageCodec.SavePng(path, image);
+                Bgra32Image loaded = CalibrationPhotoService.Load(path, 128);
+                Require(Math.Max(loaded.Width, loaded.Height) == 128,
                     "photo loading bounds the long edge for both portrait and landscape images");
                 File.Delete(path);
-                byte[] copied = new byte[checked(loaded.PixelWidth * loaded.PixelHeight * 4)];
-                new FormatConvertedBitmap(loaded, PixelFormats.Bgra32, null, 0).CopyPixels(copied, loaded.PixelWidth * 4, 0);
+                byte[] copied = loaded.Pixels;
                 Require(copied.Any(value => value != 0), "loaded photo remains usable after its file is closed and removed");
             }
         }
@@ -157,7 +152,7 @@ internal static class CalibrationPhotoTests
             cancellationToken: cancellation.Token), "cancelled loading does not read a file");
     }
 
-    private static BitmapSource Gradient(int width, int height)
+    private static Bgra32Image Gradient(int width, int height)
     {
         byte[] pixels = new byte[width * height * 4];
         for (int y = 0; y < height; y++)
@@ -169,9 +164,7 @@ internal static class CalibrationPhotoTests
             pixels[offset + 2] = (byte)((x + y) / 4);
             pixels[offset + 3] = 255;
         }
-        BitmapSource image = BitmapSource.Create(width, height, 96, 96, PixelFormats.Bgra32, null, pixels, width * 4);
-        image.Freeze();
-        return image;
+        return new Bgra32Image(width, height, pixels);
     }
 
     private static CalibrationPoint[] Circle(CalibrationPhotoTransform transform, double radius, int count, double phase)

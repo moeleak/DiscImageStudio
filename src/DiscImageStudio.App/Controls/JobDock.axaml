@@ -1,0 +1,81 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="using:DiscImageStudio.Controls"
+             xmlns:vm="using:DiscImageStudio.ViewModels"
+             x:Class="DiscImageStudio.Controls.JobDock"
+             x:DataType="vm:ShellViewModel">
+    <!-- Shell-level task strip in the window chrome: what is running and what it produced,
+         and when expanded the job log. A job never navigates away from its workspace. -->
+    <UserControl.Styles>
+        <Style Selector="PathIcon.DockChevron.expanded">
+            <Setter Property="RenderTransform" Value="rotate(180deg)" />
+        </Style>
+    </UserControl.Styles>
+    <Border Background="{DynamicResource Surface1Brush}" BorderBrush="{DynamicResource DividerBrush}" BorderThickness="0,1,0,0">
+        <Grid RowDefinitions="36,Auto,Auto">
+            <Grid Margin="14,0,10,0" ColumnDefinitions="Auto,Auto,*,Auto,Auto">
+                <controls:LucideIcon x:Name="StatusIcon" Kind="CircleCheck" Width="16" Height="16"
+                                     VerticalAlignment="Center" Foreground="{DynamicResource TextMutedBrush}" />
+                <TextBlock Grid.Column="1" Text="{Binding JobTitle}" Theme="{StaticResource CompactText}"
+                           VerticalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}" Margin="10,0" />
+                <TextBlock Grid.Column="2" MinWidth="80" Text="{Binding JobStatusText}" Theme="{StaticResource CompactHint}"
+                           TextWrapping="NoWrap" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
+                           IsVisible="{Binding !IsBurnTelemetryVisible}" />
+                <ProgressBar Grid.Column="3" Width="180" VerticalAlignment="Center" Margin="0,0,16,0"
+                             Theme="{StaticResource CompactProgressBar}"
+                             IsIndeterminate="{Binding IsJobProgressIndeterminate}" Minimum="0" Maximum="100"
+                             Value="{Binding JobProgressValue, Mode=OneWay}">
+                    <ProgressBar.IsVisible>
+                        <MultiBinding Converter="{x:Static BoolConverters.And}">
+                            <Binding Path="JobProgressVisible" />
+                            <Binding Path="!IsBurnTelemetryVisible" />
+                        </MultiBinding>
+                    </ProgressBar.IsVisible>
+                </ProgressBar>
+                <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Theme="{StaticResource CompactButton}" Content="取消" Command="{Binding CancelJobCommand}"
+                            Margin="0,0,8,0" IsVisible="{Binding CancelJobVisible}" ToolTip.Tip="停止正在运行且支持取消的任务。" />
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" IsVisible="{Binding ResultActionsVisible}">
+                        <Button Theme="{StaticResource CompactButton}" Content="打开输出位置" Command="{Binding OpenOutputCommand}" Margin="0,0,8,0" />
+                        <Button Theme="{StaticResource CompactButton}" Content="查看读回预览" Command="{Binding PreviewLastOutputCommand}"
+                                Margin="0,0,8,0" IsVisible="{Binding CanPreviewLastOutputVisible}"
+                                ToolTip.Tip="把最近生成的文件作为输入镜像，在预览工作区模拟读回。" />
+                    </StackPanel>
+                    <Button Theme="{StaticResource CompactButton}" Content="清空日志" Command="{Binding ClearLogCommand}"
+                            Margin="0,0,8,0" IsVisible="{Binding LogActionsVisible}" />
+                    <Button Theme="{StaticResource IconButton}" Command="{Binding ToggleJobDockCommand}"
+                            ToolTip.Tip="任务详情 / 运行日志" IsVisible="{Binding DockToggleVisible}">
+                        <controls:LucideIcon Classes="DockChevron" Classes.expanded="{Binding IsJobDockExpanded}"
+                                             Kind="ChevronUp" Width="16" Height="16" Foreground="{DynamicResource TextSecondaryBrush}" />
+                    </Button>
+                </StackPanel>
+            </Grid>
+            <StackPanel Grid.Row="1" Margin="14,0,14,10" IsVisible="{Binding IsBurnTelemetryVisible}">
+                <WrapPanel Margin="0,0,0,8">
+                    <WrapPanel.Styles>
+                        <Style Selector="TextBlock">
+                            <Setter Property="FontFamily" Value="{StaticResource MonoFontFamily}" />
+                            <Setter Property="FontSize" Value="12" />
+                            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+                        </Style>
+                    </WrapPanel.Styles>
+                    <TextBlock Text="{Binding BurnAmountText}" Margin="0,0,24,0" />
+                    <TextBlock Text="{Binding BurnRateText}" Margin="0,0,24,0" />
+                    <TextBlock Text="{Binding BurnMultiplierText}" />
+                </WrapPanel>
+                <ProgressBar Theme="{StaticResource CompactProgressBar}" Minimum="0" Maximum="100"
+                             Value="{Binding JobProgressValue, Mode=OneWay}" IsIndeterminate="False" />
+            </StackPanel>
+            <Border Grid.Row="2" Height="200" Background="{DynamicResource BackgroundBrush}"
+                    BorderBrush="{DynamicResource DividerBrush}" BorderThickness="0,1,0,0"
+                    IsVisible="{Binding IsJobDockExpanded}">
+                <TextBox x:Name="LogTextBox" Theme="{StaticResource BareTextBox}" IsReadOnly="True"
+                         AcceptsReturn="True" VerticalAlignment="Stretch"
+                         FontFamily="{StaticResource MonoFontFamily}" FontSize="12"
+                         Foreground="{DynamicResource TextPrimaryBrush}"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Auto"
+                         TextWrapping="Wrap" Padding="14,8" />
+            </Border>
+        </Grid>
+    </Border>
+</UserControl>

@@ -134,9 +134,7 @@ public static class ProjectJsonStore
     };
 
     public static string GetDefaultProjectsDirectory()
-        => Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
-            "DiscImageStudio Projects");
+        => Path.Combine(PlatformPaths.Documents, "DiscImageStudio Projects");
 
     public static ProjectDocument Load(string path)
     {

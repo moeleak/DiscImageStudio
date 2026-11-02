@@ -1,12 +1,11 @@
 using System.Dynamic;
 using System.IO;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
 using DiscImageStudio.Burning;
 using DiscImageStudio.Cd;
 using DiscImageStudio.Core;
 using DiscImageStudio.Core.Calibration;
 using DiscImageStudio.ViewModels;
+using DiscImageStudio.Imaging;
 
 internal static class CdDataBurnTests
 {
@@ -88,21 +87,21 @@ internal static class CdDataBurnTests
         Require(oneX.GetMultiplier(OpticalBurnMediaKind.CdData) == 1
             && Math.Abs(oneX.GetMegabytesPerSecond(OpticalBurnMediaKind.CdData) - 0.1536) < 1e-12,
             "CD data 1x is 75 logical sectors per second");
-        Require(WindowsImapiBurner.IsWritableMedia(OpticalBurnMediaKind.CdData, 0x2, [0x9])
-            && WindowsImapiBurner.IsWritableMedia(OpticalBurnMediaKind.CdData, 0x3, [0xA]),
+        Require(OpticalBurnWorkflows.IsWritableMedia(OpticalBurnMediaKind.CdData, 0x2, [0x9])
+            && OpticalBurnWorkflows.IsWritableMedia(OpticalBurnMediaKind.CdData, 0x3, [0xA]),
             "CD data accepts matched writable CD-R and CD-RW media");
-        Require(!WindowsImapiBurner.IsWritableMedia(OpticalBurnMediaKind.CdData, 0x1, [0x8])
-            && !WindowsImapiBurner.IsWritableMedia(OpticalBurnMediaKind.CdData, 0x2, [0xA])
-            && !WindowsImapiBurner.IsWritableMedia(OpticalBurnMediaKind.CdData, 0x9, [0x11])
-            && !WindowsImapiBurner.IsWritableMedia(OpticalBurnMediaKind.CdData, 0x12, [0x41]),
+        Require(!OpticalBurnWorkflows.IsWritableMedia(OpticalBurnMediaKind.CdData, 0x1, [0x8])
+            && !OpticalBurnWorkflows.IsWritableMedia(OpticalBurnMediaKind.CdData, 0x2, [0xA])
+            && !OpticalBurnWorkflows.IsWritableMedia(OpticalBurnMediaKind.CdData, 0x9, [0x11])
+            && !OpticalBurnWorkflows.IsWritableMedia(OpticalBurnMediaKind.CdData, 0x12, [0x41]),
             "CD data rejects read-only, mismatched, DVD and BD media");
         OpticalBurnRequest request = new("memory-only-device", OpticalBurnMediaKind.CdData,
             128L * 2048, (_, _) => { });
         request.Validate();
-        WindowsImapiBurner.ValidateDataMedia(request, 0x2, 128);
-        Throws<InvalidOperationException>(() => WindowsImapiBurner.ValidateDataMedia(request, 0, 128),
+        OpticalBurnWorkflows.ValidateDataMedia(request, 0x2, 128);
+        Throws<InvalidOperationException>(() => OpticalBurnWorkflows.ValidateDataMedia(request, 0, 128),
             "nonblank CD data disc is rejected");
-        Throws<InvalidOperationException>(() => WindowsImapiBurner.ValidateDataMedia(request, 0x2, 127),
+        Throws<InvalidOperationException>(() => OpticalBurnWorkflows.ValidateDataMedia(request, 0x2, 127),
             "undersized CD data disc is rejected without audio overburn allowance");
         Throws<ArgumentOutOfRangeException>(() => (request with { ContentLength = 2352 }).Validate(),
             "data stream rejects audio sector length");
@@ -116,7 +115,7 @@ internal static class CdDataBurnTests
             359_849L * 2048, (_, _) => throw new InvalidOperationException("Capacity validation must not generate data."));
         try
         {
-            WindowsImapiBurner.ValidateDataMedia(request, 0x6, 359_843);
+            OpticalBurnWorkflows.ValidateDataMedia(request, 0x6, 359_843);
             throw new InvalidOperationException("Expected the six-sector deficit to be rejected.");
         }
         catch (InvalidOperationException exception)
@@ -127,15 +126,15 @@ internal static class CdDataBurnTests
                 && exception.Message.Contains("MiB"),
                 "capacity failure reports required, available and missing sectors with binary size units");
         }
-        WindowsImapiBurner.ValidateDataMedia(request with { ContentLength = 359_843L * 2048 }, 0x6, 359_843);
+        OpticalBurnWorkflows.ValidateDataMedia(request with { ContentLength = 359_843L * 2048 }, 0x6, 359_843);
         foreach (OpticalBurnMediaKind kind in new[] { OpticalBurnMediaKind.CdData, OpticalBurnMediaKind.DvdData })
         {
-            Require(WindowsImapiBurner.ValidateWritableDataCapacity(kind, 0x6, 359_843).Length > 0,
+            Require(OpticalBurnWorkflows.ValidateWritableDataCapacity(kind, 0x6, 359_843).Length > 0,
                 "blank-plus-appendable media has valid usable capacity");
             foreach (long invalid in new[] { 0L, -1L })
-                Throws<InvalidOperationException>(() => WindowsImapiBurner.ValidateWritableDataCapacity(kind, 0x6, invalid),
+                Throws<InvalidOperationException>(() => OpticalBurnWorkflows.ValidateWritableDataCapacity(kind, 0x6, invalid),
                     "zero or negative reported capacity is rejected");
-            Throws<InvalidOperationException>(() => WindowsImapiBurner.ValidateWritableDataCapacity(kind, 0x4, 359_843),
+            Throws<InvalidOperationException>(() => OpticalBurnWorkflows.ValidateWritableDataCapacity(kind, 0x4, 359_843),
                 "appendable but nonblank media is rejected by the cooked-data validator");
         }
     }
@@ -216,11 +215,7 @@ internal static class CdDataBurnTests
     private static void WriteSourceImage(string path)
     {
         byte[] pixels = Enumerable.Range(0, 32 * 32).Select(i => (byte)(i % 256)).ToArray();
-        BitmapSource bitmap = BitmapSource.Create(32, 32, 96, 96, PixelFormats.Gray8, null, pixels, 32);
-        PngBitmapEncoder encoder = new();
-        encoder.Frames.Add(BitmapFrame.Create(bitmap));
-        using FileStream output = File.Create(path);
-        encoder.Save(output);
+        TestImages.SaveGray8Png(path, 32, 32, pixels);
     }
 
     private static void Throws<T>(Action action, string message) where T : Exception

@@ -39,7 +39,7 @@ internal static class ProjectDialogPresetTests
             state, new ProjectDialogRequest(EditMode: true, PreselectFamily: OpticalDiscFamily.BluRay), recent)
         {
             ConfirmPresetSwitch = _ => Task.FromResult(true),
-            ShowPresetSaveDialog = () => new PresetSaveResult("另存的预设"),
+            ShowPresetSaveDialog = () => Task.FromResult<PresetSaveResult?>(new PresetSaveResult("另存的预设")),
             SaveDirectory = directory,
         };
 

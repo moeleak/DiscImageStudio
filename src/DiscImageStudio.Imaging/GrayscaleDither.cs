@@ -1,8 +1,3 @@
-using System.IO;
-using System.Windows;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-
 namespace DiscImageStudio.Imaging;
 
 /// <summary>
@@ -12,18 +7,10 @@ public static class GrayscaleDither
 {
     private static readonly double[] LinearSrgbLevels = BuildLinearSrgbLevels();
 
-    public static BitmapSource LoadImage(string path)
+    public static Bgra32Image LoadImage(string path)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(path);
-        using FileStream stream = new(Path.GetFullPath(path), FileMode.Open, FileAccess.Read, FileShare.Read);
-        BitmapFrame frame = BitmapFrame.Create(
-            stream,
-            BitmapCreateOptions.PreservePixelFormat,
-            BitmapCacheOption.OnLoad);
-        frame.Freeze();
-        BitmapSource source = ToBgra32(frame);
-        source.Freeze();
-        return source;
+        return ImageCodec.Decode(path);
     }
 
     /// <summary>
@@ -31,31 +18,16 @@ public static class GrayscaleDither
     /// When <paramref name="linearizeSrgb"/> is true, input and palette bytes are assumed
     /// to be sRGB and diffusion uses linear light. This is not ICC profile conversion.
     /// </summary>
-    public static BitmapSource Process(
-        BitmapSource source,
+    public static Gray8Image Process(
+        Bgra32Image source,
         ReadOnlySpan<byte> levels,
         CancellationToken cancellationToken = default,
         bool linearizeSrgb = false)
     {
         ArgumentNullException.ThrowIfNull(source);
         cancellationToken.ThrowIfCancellationRequested();
-        int width = source.PixelWidth;
-        int height = source.PixelHeight;
-        int stride = checked(width * 4);
-        byte[] bgra = new byte[checked(stride * height)];
-        ToBgra32(source).CopyPixels(bgra, stride, 0);
-        byte[] gray = ProcessPixels(bgra, width, height, levels, cancellationToken, linearizeSrgb);
-        BitmapSource result = BitmapSource.Create(
-            width,
-            height,
-            ValidDpi(source.DpiX),
-            ValidDpi(source.DpiY),
-            PixelFormats.Gray8,
-            null,
-            gray,
-            width);
-        result.Freeze();
-        return result;
+        byte[] gray = ProcessPixels(source.Pixels, source.Width, source.Height, levels, cancellationToken, linearizeSrgb);
+        return new Gray8Image(source.Width, source.Height, gray, source.DpiX, source.DpiY);
     }
 
     /// <summary>
@@ -133,7 +105,7 @@ public static class GrayscaleDither
         return output;
     }
 
-    public static void SavePng(BitmapSource output, string path, ReadOnlySpan<byte> levels)
+    public static void SavePng(Gray8Image output, string path, ReadOnlySpan<byte> levels)
     {
         ValidateLevels(levels);
         ArgumentNullException.ThrowIfNull(output);
@@ -143,51 +115,16 @@ public static class GrayscaleDither
             throw new ArgumentException("Dithered images must be saved as lossless PNG files (.png).", nameof(path));
         }
 
-        if (output.Format != PixelFormats.Gray8)
+        foreach (byte gray in output.Pixels)
         {
-            throw new ArgumentException("The output must be a Gray8 bitmap.", nameof(output));
-        }
-
-        byte[] row = new byte[output.PixelWidth];
-        for (int y = 0; y < output.PixelHeight; y++)
-        {
-            output.CopyPixels(new Int32Rect(0, y, output.PixelWidth, 1), row, row.Length, 0);
-            foreach (byte gray in row)
+            if (!levels.Contains(gray))
             {
-                if (!levels.Contains(gray))
-                {
-                    throw new ArgumentException("The output may contain only the selected gray levels.", nameof(output));
-                }
+                throw new ArgumentException("The output may contain only the selected gray levels.", nameof(output));
             }
         }
 
-        string fullPath = Path.GetFullPath(path);
-        string directory = Path.GetDirectoryName(fullPath)!;
-        Directory.CreateDirectory(directory);
-        string temporaryPath = Path.Combine(directory, $".{Path.GetFileName(fullPath)}.{Guid.NewGuid():N}.tmp");
-        try
-        {
-            PngBitmapEncoder encoder = new();
-            encoder.Frames.Add(BitmapFrame.Create(output));
-            using (FileStream stream = new(temporaryPath, FileMode.CreateNew, FileAccess.Write, FileShare.None))
-            {
-                encoder.Save(stream);
-            }
-
-            File.Move(temporaryPath, fullPath, overwrite: true);
-        }
-        finally
-        {
-            File.Delete(temporaryPath);
-        }
+        ImageCodec.SavePng(path, output);
     }
-
-    private static BitmapSource ToBgra32(BitmapSource source) =>
-        source.Format == PixelFormats.Bgra32
-            ? source
-            : new FormatConvertedBitmap(source, PixelFormats.Bgra32, null, 0);
-
-    private static double ValidDpi(double dpi) => double.IsFinite(dpi) && dpi > 0 ? dpi : 96.0;
 
     private static void ValidateLevels(ReadOnlySpan<byte> levels)
     {

@@ -1,9 +1,8 @@
 using System.IO;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
 using DiscImageStudio.BluRay;
 using DiscImageStudio.BluRay.Encoding;
 using DiscImageStudio.Services;
+using DiscImageStudio.Imaging;
 
 internal static class BluRayImageMappingTests
 {
@@ -213,10 +212,7 @@ internal static class BluRayImageMappingTests
                 0, 0, 0, 255, 0, 0, 0, 0, 0, 0, 0, 128,
                 0, 0, 255, 255, 0, 255, 0, 255, 255, 0, 0, 255,
             ];
-            BitmapSource bitmap = BitmapSource.Create(3, 2, 96, 96, PixelFormats.Bgra32, null, bgra, 12);
-            PngBitmapEncoder encoder = new();
-            encoder.Frames.Add(BitmapFrame.Create(bitmap));
-            using (FileStream stream = File.Create(path)) encoder.Save(stream);
+            TestImages.SaveBgraPng(path, 3, 2, bgra);
             BluRayImageLoader.ValidateSource(path);
             BluRayGray8Raster raster = BluRayImageLoader.Load(path);
             Require(raster.Width == 3 && raster.Height == 2 && raster.Pixels.SequenceEqual(new byte[] { 0, 255, 127, 54, 182, 18 }),

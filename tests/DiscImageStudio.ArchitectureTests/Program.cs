@@ -7,8 +7,6 @@ using DiscImageStudio.Imaging;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.ComTypes;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
 
 DiscModuleCatalog catalog = new(
 [
@@ -38,8 +36,9 @@ Throws<ArgumentException>(
     () => new DiscModuleCatalog([new BluRayDiscModule(), new ConflictingModule()]),
     "duplicate command rejection");
 Throws<ArgumentException>(() => catalog.Resolve("unknown-command"), "unknown command rejection");
-MaximizedWindowBoundsTests.Run();
-WindowWorkAreaNativeTests.Run();
+// ISO9660/Joliet naming depends on real Unicode normalization; invariant globalization
+// silently disables it outside Windows.
+Equal("\u30AC", "\uFF76\uFF9E".Normalize(System.Text.NormalizationForm.FormKC), "Unicode compatibility normalization is available");
 BluRayModuleTests.Run();
 BluRayEncodingTests.Run();
 BluRayPreviewTests.Run();
@@ -52,6 +51,11 @@ BluRaySidecarTests.Run();
 BluRayFilePlacementTests.Run();
 BluRayPatternRangeTests.Run();
 UdfFilesystemTests.Run();
+CaseVariantNamesTests.Run();
+ImageCodecTests.Run();
+#if WINDOWS
+WicParityTests.Run();
+#endif
 UdfLargeFileTests.Run();
 GeneratedContentProgressTests.Run();
 OpticalWriteProgressTests.Run();
@@ -61,6 +65,7 @@ BluRaySequentialBurnTests.Run();
 BluRayFlushDiagnosticsTests.Run();
 BluRaySequentialWriterTests.Run();
 BluRaySessionCleanupTests.Run();
+MmcBackendTests.Run();
 RunStreamingGenerationTests();
 TestDiscPresets();
 TestDiscPresetJson();
@@ -76,8 +81,10 @@ CdDataImageTests.Run();
 CdDataBurnTests.Run();
 CdDataDaoWorkflowTests.Run();
 CdMode1SectorTests.Run();
+#if WINDOWS
 CdDataRawImageTests.Run();
 CdRawImageByteOrderTests.Run();
+#endif
 CdBinaryTests.Run();
 CdSimdSamplingTests.Run();
 FourLevelPreviewTests.Run();
@@ -647,21 +654,26 @@ static void TestStreamingGeneration(string sourcePath)
         hybridBytes.AsSpan(prefixBytes).ToArray().Distinct().Count() > 1,
         "hybrid stream switches to generated drawing data at the planned LBA");
 
+    TestStreamingBurnContracts(cdStream.Length, dvdStream.Length);
+}
+
+static void TestStreamingBurnContracts(long cdLength, long dvdLength)
+{
     new OpticalBurnRequest(
         "test-recorder",
         OpticalBurnMediaKind.CdAudio,
-        cdStream.Length,
+        cdLength,
         (_, _) => { }).Validate();
     new OpticalBurnRequest(
         "test-recorder",
         OpticalBurnMediaKind.DvdData,
-        dvdStream.Length,
+        dvdLength,
         (_, _) => { }).Validate();
     Throws<ArgumentOutOfRangeException>(
         () => new OpticalBurnRequest(
             "test-recorder",
             OpticalBurnMediaKind.DvdData,
-            dvdStream.Length - 1,
+            dvdLength - 1,
             (_, _) => { }).Validate(),
         "DVD streaming rejects partial sectors");
     OpticalWriteSpeed dvd16X = new(10820, true);
@@ -682,12 +694,12 @@ static void TestStreamingGeneration(string sourcePath)
         "write speed rejects zero sectors per second");
     OpticalWriteSpeed requestedSpeed = new(1200, false);
     True(
-        requestedSpeed == WindowsImapiBurner.ResolveWriteSpeed(
+        requestedSpeed == OpticalBurnWorkflows.ResolveWriteSpeed(
             requestedSpeed,
             [new OpticalWriteSpeed(300, false)]),
         "manual write speed is preserved");
     True(
-        new OpticalWriteSpeed(300, false) == WindowsImapiBurner.ResolveWriteSpeed(
+        new OpticalWriteSpeed(300, false) == OpticalBurnWorkflows.ResolveWriteSpeed(
             requested: null,
             [
                 new OpticalWriteSpeed(1200, false),
@@ -742,7 +754,9 @@ static void TestStreamingGeneration(string sourcePath)
     }
 
     TestCdRawDaoCallOrder();
+#if WINDOWS
     TestCdRawImageConstruction();
+#endif
 }
 
 static void TestCdRawDaoCallOrder()
@@ -763,7 +777,7 @@ static void TestCdRawDaoCallOrder()
     RecordingCdRawSession session = new();
     using RecordingCdRawImageSession imageSession = new(session.Calls);
 
-    WindowsImapiBurner.BurnCdAudio(
+    OpticalBurnWorkflows.BurnCdAudio(
         session,
         imageSession,
         content,
@@ -781,7 +795,7 @@ static void TestCdRawDaoCallOrder()
 
     RecordingCdRawSession fallbackSpeedSession = new();
     using RecordingCdRawImageSession fallbackSpeedImage = new(fallbackSpeedSession.Calls);
-    WindowsImapiBurner.BurnCdAudio(
+    OpticalBurnWorkflows.BurnCdAudio(
         fallbackSpeedSession,
         fallbackSpeedImage,
         content,
@@ -801,7 +815,7 @@ static void TestCdRawDaoCallOrder()
     {
         ImageStartOfLeadout = 4,
     };
-    WindowsImapiBurner.BurnCdAudio(
+    OpticalBurnWorkflows.BurnCdAudio(
         boundedOverburnSession,
         boundedOverburnImage,
         content,
@@ -822,7 +836,7 @@ static void TestCdRawDaoCallOrder()
     };
     try
     {
-        WindowsImapiBurner.BurnCdAudio(
+        OpticalBurnWorkflows.BurnCdAudio(
             excessiveOverburnSession,
             excessiveOverburnImage,
             content,
@@ -852,7 +866,7 @@ static void TestCdRawDaoCallOrder()
     using RecordingCdRawImageSession failingImageSession = new(failingSession.Calls);
     try
     {
-        WindowsImapiBurner.BurnCdAudio(
+        OpticalBurnWorkflows.BurnCdAudio(
             failingSession,
             failingImageSession,
             content,
@@ -869,6 +883,7 @@ static void TestCdRawDaoCallOrder()
     }
 }
 
+#if WINDOWS
 static void TestCdRawImageConstruction()
 {
     byte[] sector = Enumerable.Repeat((byte)0x5A, 2352).ToArray();
@@ -895,32 +910,11 @@ static void TestCdRawImageConstruction()
         "Raw CD image includes DAO lead-in, subcode, and lead-out");
 }
 
-static void WriteSolidPng(string path, int width, int height, byte level)
-{
-    int stride = checked(width * 4);
-    byte[] pixels = new byte[checked(stride * height)];
-    for (int offset = 0; offset < pixels.Length; offset += 4)
-    {
-        pixels[offset] = level;
-        pixels[offset + 1] = level;
-        pixels[offset + 2] = level;
-        pixels[offset + 3] = 255;
-    }
+#endif
 
-    BitmapSource bitmap = BitmapSource.Create(
-        width,
-        height,
-        96,
-        96,
-        PixelFormats.Bgra32,
-        null,
-        pixels,
-        stride);
-    PngBitmapEncoder encoder = new();
-    encoder.Frames.Add(BitmapFrame.Create(bitmap));
-    using FileStream output = File.Create(path);
-    encoder.Save(output);
-}
+static void WriteSolidPng(string path, int width, int height, byte level)
+    => DiscImageStudio.Imaging.ImageCodec.SavePng(path,
+        DiscImageStudio.Imaging.Bgra32Image.CreateSolid(width, height, level, level, level));
 
 sealed class ForwardOnlyWriteStream(Stream destination) : Stream
 {
@@ -1068,6 +1062,7 @@ sealed class RecordingCdRawImageSession(List<string> calls) : ICdRawImageSession
     {
     }
 }
+
 
 sealed class ConflictingModule : IOpticalDiscModule
 {

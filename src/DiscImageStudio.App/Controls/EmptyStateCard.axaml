@@ -1,0 +1,23 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="using:DiscImageStudio.Controls"
+             x:Class="DiscImageStudio.Controls.EmptyStateCard">
+    <!-- In-place guidance for a surface with nothing to show yet: what is missing, why, and
+         the one action that fills the gap. -->
+    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="380">
+        <Border Width="64" Height="64" CornerRadius="{StaticResource RadiusPanel}"
+                Background="{DynamicResource Surface2Brush}"
+                BorderBrush="{DynamicResource DividerBrush}" BorderThickness="1"
+                HorizontalAlignment="Center">
+            <controls:LucideIcon x:Name="IconHost" Width="28" Height="28"
+                                 HorizontalAlignment="Center" VerticalAlignment="Center"
+                                 Foreground="{DynamicResource TextMutedBrush}" />
+        </Border>
+        <TextBlock x:Name="TitleText" Theme="{StaticResource RowText}" FontWeight="Medium"
+                   HorizontalAlignment="Center" Margin="0,14,0,0" />
+        <TextBlock x:Name="DescriptionText" Theme="{StaticResource HintText}" TextWrapping="Wrap"
+                   TextAlignment="Center" HorizontalAlignment="Center" Margin="0,6,0,0" />
+        <Button x:Name="ActionButton" Theme="{StaticResource CompactButton}"
+                HorizontalAlignment="Center" Margin="0,14,0,0" />
+    </StackPanel>
+</UserControl>

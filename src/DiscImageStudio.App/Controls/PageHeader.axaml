@@ -1,0 +1,25 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="using:DiscImageStudio.Controls"
+             x:Class="DiscImageStudio.Controls.PageHeader">
+    <!-- One page-header recipe for every workspace: title, optional family badge, optional
+         hint hotspot, optional subtitle line, the workflow stage rail, and a right-aligned
+         action slot (the "next step" affordance). -->
+    <Grid RowDefinitions="Auto,Auto" Margin="0,0,0,20">
+        <Grid ColumnDefinitions="*,Auto">
+            <StackPanel VerticalAlignment="Bottom">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock x:Name="TitleText" Theme="{StaticResource H1Title}" />
+                    <Border x:Name="BadgeChip" Margin="10,0,0,4" Padding="6,2" CornerRadius="6"
+                            Background="{DynamicResource Surface3Brush}" VerticalAlignment="Bottom" IsVisible="False">
+                        <TextBlock x:Name="BadgeText" Theme="{StaticResource BadgeText}" />
+                    </Border>
+                    <controls:HelpHint x:Name="HintSpot" Margin="10,0,0,3" VerticalAlignment="Bottom" IsVisible="False" />
+                </StackPanel>
+                <TextBlock x:Name="SubtitleText" Theme="{StaticResource PageSubtitle}" Margin="0,6,0,0" IsVisible="False" />
+            </StackPanel>
+            <ContentPresenter x:Name="ActionHost" Grid.Column="1" VerticalAlignment="Bottom" Margin="16,0,0,0" />
+        </Grid>
+        <controls:StageBar x:Name="Stages" Grid.Row="1" Margin="2,10,0,0" IsVisible="False" />
+    </Grid>
+</UserControl>

@@ -2,7 +2,6 @@ using System.Globalization;
 using System.IO;
 using System.Reflection;
 using System.Runtime.ExceptionServices;
-using System.Windows.Threading;
 using DiscImageStudio.Burning;
 using DiscImageStudio.Core;
 using DiscImageStudio.Core.Calibration;
@@ -18,7 +17,6 @@ internal static class CalibrationBurnSourceTests
             try { RunOnSta(); }
             catch (Exception exception) { error = exception; }
         });
-        thread.SetApartmentState(ApartmentState.STA);
         thread.Start();
         thread.Join();
         if (error is not null) ExceptionDispatchInfo.Capture(error).Throw();
@@ -32,12 +30,13 @@ internal static class CalibrationBurnSourceTests
         CultureInfo previousCulture = CultureInfo.CurrentCulture;
         SynchronizationContext? previousContext = SynchronizationContext.Current;
         CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
-        SynchronizationContext.SetSynchronizationContext(new DispatcherSynchronizationContext());
+        TestUiDispatcher dispatcher = new();
+        SynchronizationContext.SetSynchronizationContext(dispatcher);
         ShellViewModel? shell = null;
         try
         {
             RecordingBurner burner = new();
-            shell = new ShellViewModel(Dispatcher.CurrentDispatcher, burner);
+            shell = new ShellViewModel(dispatcher, burner);
             DiscParametersState state = shell.State;
             state.CdInnerRadius = state.DvdInnerRadius = state.BdInnerRadius = "24";
             state.CdOuterRadius = state.DvdOuterRadius = state.BdOuterRadius = "58";

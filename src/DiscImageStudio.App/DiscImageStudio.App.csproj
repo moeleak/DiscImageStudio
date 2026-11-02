@@ -1,58 +1,47 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <!-- Cross-platform (Windows / Linux / macOS) Avalonia shell over DiscImageStudio.Presentation.
+       Without arguments it opens the GUI; with arguments it runs the unified command line. -->
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net10.0-windows</TargetFramework>
-    <UseWPF>true</UseWPF>
+    <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <!-- WPF text and font services require named cultures such as en and zh-CN. -->
     <InvariantGlobalization>false</InvariantGlobalization>
     <AssemblyName>DiscImageStudio</AssemblyName>
     <RootNamespace>DiscImageStudio</RootNamespace>
     <StartupObject>DiscImageStudio.Program</StartupObject>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Assets\DiscImageStudio.ico</ApplicationIcon>
     <Title>Disc Image Studio</Title>
     <Product>Disc Image Studio</Product>
-    <Description>Create and stream-burn image-mapped CD audio tracks and DVD data discs.</Description>
+    <Description>Create and stream-burn image-mapped CD, DVD and Blu-ray discs.</Description>
     <Company>Disc Image Studio</Company>
     <Copyright>Copyright © 2026</Copyright>
     <NeutralLanguage>zh-CN</NeutralLanguage>
     <PublishSingleFile>true</PublishSingleFile>
+    <!-- Skia and HarfBuzz are native libraries; the single-file bundle extracts them. -->
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
     <DebugType>embedded</DebugType>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
-    <PackageReference Include="MahApps.Metro.IconPacks.Lucide" Version="6.2.1" />
+    <PackageReference Include="Avalonia" Version="$(AvaloniaVersion)" />
+    <PackageReference Include="Avalonia.Desktop" Version="$(AvaloniaVersion)" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="$(AvaloniaVersion)" />
+    <PackageReference Include="Avalonia.Headless" Version="$(AvaloniaVersion)" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\DiscImageStudio.Core\DiscImageStudio.Core.csproj" />
-    <ProjectReference Include="..\DiscImageStudio.Burning\DiscImageStudio.Burning.csproj" />
-    <ProjectReference Include="..\DiscImageStudio.Imaging\DiscImageStudio.Imaging.csproj" />
-    <ProjectReference Include="..\DiscImageStudio.Cd\DiscImageStudio.Cd.csproj" />
-    <ProjectReference Include="..\DiscImageStudio.Dvd\DiscImageStudio.Dvd.csproj" />
-    <ProjectReference Include="..\DiscImageStudio.BluRay\DiscImageStudio.BluRay.csproj" />
+    <ProjectReference Include="..\DiscImageStudio.Presentation\DiscImageStudio.Presentation.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Assets\Fonts\HarmonyOS_Sans_SC_Regular.ttf" />
-    <Resource Include="Assets\Fonts\HarmonyOS_Sans_SC_Medium.ttf" />
-    <Resource Include="Assets\Fonts\HarmonyOS_Sans_SC_Bold.ttf" />
-    <Resource Include="Assets\DiscImageStudio-256.png" />
+    <AvaloniaResource Include="Assets\Fonts\HarmonyOS_Sans_SC_Regular.ttf" />
+    <AvaloniaResource Include="Assets\Fonts\HarmonyOS_Sans_SC_Medium.ttf" />
+    <AvaloniaResource Include="Assets\Fonts\HarmonyOS_Sans_SC_Bold.ttf" />
+    <AvaloniaResource Include="Assets\DiscImageStudio-256.png" />
   </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="..\..\LICENSE" LogicalName="DiscImageStudio.Licenses.GPL" />
-    <EmbeddedResource Include="..\..\THIRD-PARTY-NOTICES.txt" LogicalName="DiscImageStudio.Licenses.ThirdParty" />
-    <EmbeddedResource Include="Assets\Fonts\HarmonyOS-Sans-LICENSE.txt" LogicalName="DiscImageStudio.Licenses.HarmonyOS" />
-  </ItemGroup>
-  <Target Name="RejectInvariantGlobalizationForWpf" BeforeTargets="PrepareForBuild"
-          Condition="'$(InvariantGlobalization)' == 'true'">
-    <Error Text="DiscImageStudio.App cannot use invariant globalization because WPF font rendering requires named cultures." />
-  </Target>
   <Target Name="ExcludeHostedSolverRuntimeConfiguration" BeforeTargets="_HandleFileConflictsForPublish">
-    <!-- The solver runs inside this app and uses its runtime configuration.
-         RID and non-RID references can otherwise publish the solver config twice. -->
+    <!-- The solver runs inside this app and uses its runtime configuration. -->
     <ItemGroup>
       <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)"
           Condition="'%(ResolvedFileToPublish.Filename)%(ResolvedFileToPublish.Extension)' == 'DvdImageSolver.runtimeconfig.json'" />

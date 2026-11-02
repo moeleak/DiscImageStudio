@@ -1,0 +1,131 @@
+<UserControl x:Class="DiscImageStudio.Views.HomeView"
+             xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:conv="using:DiscImageStudio.Hosting"
+             xmlns:controls="using:DiscImageStudio.Controls"
+             xmlns:vm="using:DiscImageStudio.ViewModels"
+             x:DataType="vm:HomeViewModel">
+    <!-- The page padding lives on the content, not on the scroller, so the scroll rail sits at
+         the window edge like every other workspace. -->
+    <ScrollViewer controls:ScrollMaskBehavior.Enabled="True">
+        <!-- MaxWidth alone centers this column: Stretch + MaxWidth arranges it at 1120 and
+             WPF centers the capped element, so the sections span the full page column. -->
+        <StackPanel MaxWidth="1120" Margin="{StaticResource PagePadding}">
+            <TextBlock Text="Disc Image Studio" Theme="{StaticResource H1Title}" />
+            <TextBlock Theme="{StaticResource PageSubtitle}" Margin="0,8,0,0"
+                       Text="全能的光盘盘面可见图像生成与刻录工作台" />
+
+            <!-- One card for the three ways forward: the open project on the left, starting
+                 something else on the right. The project name appears once, on the control that
+                 actually goes there. -->
+            <Border Theme="{StaticResource CardStyle}" Padding="14,12" Margin="0,20,0,0">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Button Grid.Column="0" Theme="{StaticResource SecondaryButton}"
+                            Height="{StaticResource ControlHeight}" Padding="18,0"
+                            Command="{Binding ContinueProjectCommand}"
+                            IsVisible="{Binding IsProjectOpen}"
+                            ToolTip.Tip="回到打开的工程，从设计工作区继续。">
+                        <StackPanel Orientation="Horizontal">
+                            <controls:LucideIcon Kind="ArrowLeft" Width="16" Height="16"
+                                                      VerticalAlignment="Center"
+                                                      Foreground="{DynamicResource PrimaryBrush}" />
+                            <TextBlock Text="返回工程" Margin="8,0,0,0" VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding CurrentProjectName}" Margin="8,0,0,0"
+                                       VerticalAlignment="Center" MaxWidth="260"
+                                       TextTrimming="CharacterEllipsis"
+                                       Foreground="{DynamicResource TextMutedBrush}" />
+                        </StackPanel>
+                    </Button>
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Theme="{StaticResource SecondaryButton}" Content="打开工程"
+                                Height="{StaticResource ControlHeight}" Padding="18,0"
+                                Command="{Binding OpenProjectCommand}" />
+                        <Button Theme="{StaticResource PrimaryButton}" Content="新建工程"
+                                Height="{StaticResource ControlHeight}" Padding="18,0" Margin="10,0,0,0"
+                                Command="{Binding NewProjectCommand}" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Sections follow the Adobe start-page idiom: a bare heading and the content
+                 sitting directly on the page, no surrounding card. -->
+            <TextBlock Text="从模板开始" Theme="{StaticResource CardTitle}" Margin="0,32,0,8" />
+            <!-- Tiles left-align with the section heading; a hanging last row is correct in
+                 the flat, Adobe-style layout. -->
+            <ItemsControl ItemsSource="{Binding Templates}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:HomeTemplateTile">
+                        <Button Theme="{StaticResource TileButton}" Width="146" Height="132" Margin="4"
+                                CommandParameter="{Binding}"
+                                Command="{Binding $parent[ItemsControl].((vm:HomeViewModel)DataContext).TemplateCommand}"
+                                ToolTip.Tip="{Binding ToolTipText}">
+                            <StackPanel VerticalAlignment="Center">
+                                <controls:LucideIcon Kind="{Binding Icon, Converter={x:Static conv:ValueConverters.AppIconKind}}" Width="30" Height="30"
+                                                          HorizontalAlignment="Center"
+                                                          Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBlock Text="{Binding Title}" Theme="{StaticResource RowText}"
+                                           FontWeight="Medium" Height="36" Margin="0,10,0,0" TextAlignment="Center"
+                                           TextWrapping="Wrap" />
+                                <TextBlock Text="{Binding Detail}" Theme="{StaticResource CompactHint}"
+                                           Height="20" Margin="0,4,0,0" TextAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <!-- No recents means no section: an empty "最近工程" heading is noise on first run. -->
+            <StackPanel IsVisible="{Binding HasRecents}">
+                <Grid Margin="0,36,0,12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="最近工程" Theme="{StaticResource CardTitle}"
+                               VerticalAlignment="Center" />
+                    <Button Grid.Column="1" Theme="{StaticResource QuietButton}" Content="清空"
+                            Height="{StaticResource CompactHeight}" Padding="14,0"
+                            Command="{Binding ClearRecentsCommand}" />
+                </Grid>
+                <!-- Three mini tiles per row at any window width: UniformGrid stretches the
+                     tiles, the sleeve's 3*:1* template shrinks with them. The context menu's
+                     DataContext is the tile; its click handler forwards to the page command. -->
+                <ItemsControl ItemsSource="{Binding Recents}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Columns="3" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:RecentProjectTile">
+                            <controls:RecentProjectCard Margin="4"
+                                                        Title="{Binding Title}"
+                                                        FamilyLabel="{Binding FamilyLabel}"
+                                                        LocationText="{Binding LocationText}"
+                                                        ThumbnailSource="{Binding Thumbnail, Converter={x:Static conv:ValueConverters.RasterImage}}"
+                                                        Command="{Binding $parent[ItemsControl].((vm:HomeViewModel)DataContext).OpenRecentCommand}"
+                                                        CommandParameter="{Binding}"
+                                                        ToolTip.Tip="{Binding ToolTipText}">
+                                <controls:RecentProjectCard.ContextMenu>
+                                    <ContextMenu>
+                                        <MenuItem Header="从列表中移除" Click="RemoveRecent_Click" />
+                                    </ContextMenu>
+                                </controls:RecentProjectCard.ContextMenu>
+                            </controls:RecentProjectCard>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

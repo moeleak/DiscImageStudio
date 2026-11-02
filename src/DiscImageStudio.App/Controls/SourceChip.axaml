@@ -1,0 +1,17 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="using:DiscImageStudio.Controls"
+             x:Class="DiscImageStudio.Controls.SourceChip">
+    <!-- Small read-only source strip: "what this workspace consumes", with an optional
+         action slot for the owner link. -->
+    <Border Background="{DynamicResource Surface2Brush}" BorderBrush="{DynamicResource DividerBrush}" BorderThickness="1"
+            CornerRadius="{StaticResource RadiusPanel}" Padding="10,8">
+        <Grid ColumnDefinitions="Auto,*,Auto">
+            <controls:LucideIcon Kind="Layers" Width="15" Height="15" VerticalAlignment="Center"
+                                 Foreground="{DynamicResource TextSecondaryBrush}" />
+            <TextBlock x:Name="ChipText" Grid.Column="1" Theme="{StaticResource RowText}" Margin="8,0,0,0"
+                       VerticalAlignment="Center" Foreground="{DynamicResource TextSecondaryBrush}" />
+            <ContentPresenter x:Name="ActionHost" Grid.Column="2" VerticalAlignment="Center" Margin="12,0,0,0" />
+        </Grid>
+    </Border>
+</UserControl>

@@ -1,0 +1,10 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="using:DiscImageStudio.Controls"
+             x:Class="DiscImageStudio.Controls.InterleaveToggle">
+    <!-- Shared CD-DA interleave switch; each site supplies the label and hint for its direction. -->
+    <StackPanel Orientation="Horizontal">
+        <CheckBox x:Name="Toggle" VerticalAlignment="Center" />
+        <controls:HelpHint x:Name="HintSpot" Margin="8,0,0,0" VerticalAlignment="Center" />
+    </StackPanel>
+</UserControl>

@@ -1,5 +1,4 @@
-using System.Runtime.ExceptionServices;
-using System.Windows;
+using Avalonia;
 using DiscImageStudio.Controls;
 
 /// <summary>Covers the design canvas zoom bar: the +/- buttons step on top of the fit scale in
@@ -9,20 +8,11 @@ internal static class DesignCanvasZoomTests
 {
     internal static void Run()
     {
-        Exception? error = null;
-        var thread = new Thread(() =>
+        AvaloniaTestHost.Run(() =>
         {
-            try
-            {
-                TestButtonSteps();
-                TestBounds();
-            }
-            catch (Exception exception) { error = exception; }
+            TestButtonSteps();
+            TestBounds();
         });
-        thread.SetApartmentState(ApartmentState.STA);
-        thread.Start();
-        thread.Join();
-        if (error is not null) ExceptionDispatchInfo.Capture(error).Throw();
         Console.WriteLine("design-canvas-zoom: passed (+/- steps, 25%-1200% bounds, fit reset)");
     }
 
@@ -63,7 +53,6 @@ internal static class DesignCanvasZoomTests
         DiscDesignCanvas canvas = new();
         canvas.Measure(new Size(900, 700));
         canvas.Arrange(new Rect(0, 0, 900, 700));
-        canvas.UpdateLayout();
         return canvas;
     }
 

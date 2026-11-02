@@ -1,0 +1,46 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="DiscImageStudio.App"
+             RequestedThemeVariant="Dark">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceInclude Source="avares://DiscImageStudio/Themes/Tokens.axaml" />
+                <ResourceInclude Source="avares://DiscImageStudio/Themes/Icons.axaml" />
+                <ResourceInclude Source="avares://DiscImageStudio/Themes/Controls.axaml" />
+                <ResourceInclude Source="avares://DiscImageStudio/Themes/CustomControls.axaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <!-- Fluent shape tokens follow the app's radii. -->
+            <CornerRadius x:Key="ControlCornerRadius">8</CornerRadius>
+            <CornerRadius x:Key="OverlayCornerRadius">10</CornerRadius>
+            <!-- Unsized icons are 16 px, as MahApps icon packs were (Fluent's default is 20). -->
+            <x:Double x:Key="IconElementThemeWidth">16</x:Double>
+            <x:Double x:Key="IconElementThemeHeight">16</x:Double>
+        </ResourceDictionary>
+    </Application.Resources>
+    <Application.Styles>
+        <FluentTheme>
+            <!-- Fluent controls (fields, checks, sliders, scroll bars) derive their colors from
+                 these palettes, which mirror the Dark/Light tokens. -->
+            <FluentTheme.Palettes>
+                <ColorPaletteResources x:Key="Dark" Accent="#3385FF" RegionColor="#121212" ErrorText="#F31260"
+                                       BaseHigh="#FAFAFA" BaseMediumHigh="#D4D4D8" BaseMedium="#A1A1AA"
+                                       BaseMediumLow="#71717A" BaseLow="#2E2E33"
+                                       AltHigh="#121212" AltMediumHigh="#18181B" AltMedium="#18181B"
+                                       AltMediumLow="#18181B" AltLow="#18181B"
+                                       ChromeLow="#18181B" ChromeMediumLow="#18181B" ChromeMedium="#26262B"
+                                       ChromeHigh="#3D3D45" ChromeAltLow="#A1A1AA"
+                                       ListLow="#1B1B1C" ListMedium="#26262B" />
+                <ColorPaletteResources x:Key="Light" Accent="#2569CC" RegionColor="#F5F5F7" ErrorText="#D61F4E"
+                                       BaseHigh="#18181B" BaseMediumHigh="#3F3F46" BaseMedium="#52525B"
+                                       BaseMediumLow="#71717A" BaseLow="#E2E2E6"
+                                       AltHigh="#FFFFFF" AltMediumHigh="#FFFFFF" AltMedium="#FFFFFF"
+                                       AltMediumLow="#FFFFFF" AltLow="#FFFFFF"
+                                       ChromeLow="#ECECEF" ChromeMediumLow="#FFFFFF" ChromeMedium="#ECECEF"
+                                       ChromeHigh="#C7C7CC" ChromeAltLow="#52525B"
+                                       ListLow="#EBEBEF" ListMedium="#E2E2E6" />
+            </FluentTheme.Palettes>
+        </FluentTheme>
+        <StyleInclude Source="avares://DiscImageStudio/Themes/Styles.axaml" />
+    </Application.Styles>
+</Application>

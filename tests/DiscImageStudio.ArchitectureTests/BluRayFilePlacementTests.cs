@@ -1,14 +1,11 @@
 using System.Buffers.Binary;
 using System.Collections.Concurrent;
-using System.ComponentModel;
 using System.IO;
-using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json.Nodes;
 using DiscImageStudio.BluRay;
 using DiscImageStudio.Core;
 using DiscImageStudio.Iso;
-using Microsoft.Win32.SafeHandles;
 
 internal static class BluRayFilePlacementTests
 {
@@ -146,8 +143,7 @@ internal static class BluRayFilePlacementTests
         const long length = (long)uint.MaxValue + 131_074;
         using (FileStream sparse = new(file, FileMode.CreateNew, FileAccess.ReadWrite, FileShare.None))
         {
-            if (!DeviceIoControl(sparse.SafeFileHandle, 0x000900C4, IntPtr.Zero, 0, IntPtr.Zero, 0, out _, IntPtr.Zero))
-                throw new Win32Exception(Marshal.GetLastWin32Error(), "Sparse-file support is required before extending the test file.");
+            SparseFiles.MarkSparse(sparse, "Sparse-file support is required before extending the test file.");
             sparse.SetLength(length);
         }
         UdfImageWriter.LayoutPlan plan = UdfImageWriter.Plan(source, BluRayDiscParameters.SectorsPerLayer,
@@ -241,12 +237,6 @@ internal static class BluRayFilePlacementTests
             if (Buffer.Length >= 64 * 1024) cancellation.Cancel();
         }
     }
-
-    [DllImport("kernel32.dll", SetLastError = true)]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static extern bool DeviceIoControl(SafeFileHandle device, uint controlCode,
-        IntPtr inputBuffer, uint inputBufferSize, IntPtr outputBuffer, uint outputBufferSize,
-        out uint bytesReturned, IntPtr overlapped);
 
     private static uint U32(ReadOnlySpan<byte> bytes, int offset) => BinaryPrimitives.ReadUInt32LittleEndian(bytes.Slice(offset, 4));
     private static ushort U16(ReadOnlySpan<byte> bytes, int offset) => BinaryPrimitives.ReadUInt16LittleEndian(bytes.Slice(offset, 2));

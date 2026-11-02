@@ -1,0 +1,246 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:controls="using:DiscImageStudio.Controls">
+
+    <!-- MonitorCard: banded header / body / optional status footer. -->
+    <ControlTheme x:Key="{x:Type controls:MonitorCard}" TargetType="controls:MonitorCard">
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="Background" Value="{DynamicResource Surface1Brush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource DividerBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="{StaticResource RadiusCard}"
+                        Padding="{TemplateBinding Padding}" ClipToBounds="True">
+                    <Grid RowDefinitions="Auto,*,Auto">
+                        <Border Theme="{StaticResource CardHeaderBandStyle}">
+                            <Grid ColumnDefinitions="Auto,*,Auto" Margin="14,0,10,0">
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Spacing="8">
+                                    <controls:LucideIcon Width="15" Height="15" VerticalAlignment="Center"
+                                                         Kind="{TemplateBinding IconKind}"
+                                                         IsVisible="{TemplateBinding IconKind, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                                                         Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <TextBlock Theme="{StaticResource PanelTitle}" VerticalAlignment="Center"
+                                               Text="{TemplateBinding Title}" />
+                                </StackPanel>
+                                <TextBlock Grid.Column="1" Theme="{StaticResource HintText}" TextWrapping="NoWrap"
+                                           TextTrimming="CharacterEllipsis" HorizontalAlignment="Right"
+                                           Margin="12,0" VerticalAlignment="Center"
+                                           Text="{TemplateBinding Subtitle}"
+                                           IsVisible="{TemplateBinding Subtitle, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                                <ContentPresenter Grid.Column="2" VerticalAlignment="Center" Content="{TemplateBinding Actions}" />
+                            </Grid>
+                        </Border>
+                        <ContentPresenter Name="PART_ContentPresenter" Grid.Row="1"
+                                          Content="{TemplateBinding Content}"
+                                          ContentTemplate="{TemplateBinding ContentTemplate}"
+                                          HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                          VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" />
+                        <Border Name="PART_StatusStrip" Grid.Row="2" Theme="{StaticResource CardFooterBandStyle}" Padding="12,6">
+                            <Panel>
+                                <TextBlock Name="PART_StatusText" Theme="{StaticResource HintText}" TextWrapping="NoWrap"
+                                           TextTrimming="CharacterEllipsis" Text="{TemplateBinding StatusText}" />
+                                <ContentPresenter Name="PART_StatusContent" Content="{TemplateBinding StatusContent}" />
+                            </Panel>
+                        </Border>
+                    </Grid>
+                </Border>
+            </ControlTemplate>
+        </Setter>
+        <!-- The footer shows when there is status text or status content; content wins. -->
+        <Style Selector="^ /template/ Border#PART_StatusStrip">
+            <Setter Property="IsVisible" Value="False" />
+        </Style>
+        <Style Selector="^:has-status /template/ Border#PART_StatusStrip">
+            <Setter Property="IsVisible" Value="True" />
+        </Style>
+        <Style Selector="^:has-status-content /template/ TextBlock#PART_StatusText">
+            <Setter Property="IsVisible" Value="False" />
+        </Style>
+    </ControlTheme>
+
+    <!-- The StepCard header: a flat full-width toggle whose only states are hover and press
+         (Avalonia selectors cannot reach into a template inside another template). -->
+    <ControlTheme x:Key="StepHeaderToggle" TargetType="ToggleButton">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Template">
+            <ControlTemplate>
+                <ContentPresenter Name="PART_ContentPresenter"
+                                  Background="{TemplateBinding Background}"
+                                  CornerRadius="{TemplateBinding CornerRadius}"
+                                  Padding="{TemplateBinding Padding}"
+                                  Content="{TemplateBinding Content}"
+                                  ContentTemplate="{TemplateBinding ContentTemplate}"
+                                  HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                  VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" />
+            </ControlTemplate>
+        </Setter>
+        <Style Selector="^:pointerover">
+            <Setter Property="Background" Value="{DynamicResource HoverOverlayBrush}" />
+        </Style>
+        <Style Selector="^:pressed">
+            <Setter Property="Background" Value="{DynamicResource PressedOverlayBrush}" />
+        </Style>
+    </ControlTheme>
+
+    <!-- StepCard: numbered workflow step with a state chip and a collapsible body. -->
+    <ControlTheme x:Key="{x:Type controls:StepCard}" TargetType="controls:StepCard">
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border Background="{DynamicResource Surface1Brush}" BorderBrush="{DynamicResource DividerBrush}"
+                        BorderThickness="1" CornerRadius="{StaticResource RadiusCard}">
+                    <Grid RowDefinitions="Auto,*">
+                        <ToggleButton Name="PART_Header" Theme="{StaticResource StepHeaderToggle}"
+                                      Focusable="False" Cursor="Hand"
+                                      HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                                      BorderThickness="0" Padding="14,10"
+                                      CornerRadius="{StaticResource RadiusCard}"
+                                      IsChecked="{TemplateBinding IsExpanded, Mode=TwoWay}">
+                            <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+                                <Grid Width="20" Height="20" VerticalAlignment="Center">
+                                    <Border Name="StepDot" CornerRadius="10" Background="{DynamicResource Surface2Brush}" />
+                                    <TextBlock Name="StepNumberText" Text="{TemplateBinding StepNumber}" FontSize="11" FontWeight="Bold"
+                                               Foreground="{DynamicResource TextMutedBrush}"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    <controls:LucideIcon Name="DoneCheck" Kind="Check" Width="12" Height="12"
+                                                         Foreground="{DynamicResource SuccessBrush}" IsVisible="False"
+                                                         HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Grid>
+                                <TextBlock Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center"
+                                           Text="{TemplateBinding StepTitle}" Theme="{StaticResource CardTitle}" />
+                                <Border Grid.Column="2" CornerRadius="{StaticResource RadiusChip}" Padding="6,2"
+                                        Background="{DynamicResource Surface3Brush}" VerticalAlignment="Center" Margin="10,0,0,0">
+                                    <TextBlock Name="StateChipText" Theme="{StaticResource MicroText}" Text="待开始" />
+                                </Border>
+                                <controls:LucideIcon Name="HeaderChevron" Grid.Column="3" Kind="ChevronDown" Width="16" Height="16"
+                                                     Margin="10,0,0,0" VerticalAlignment="Center"
+                                                     Foreground="{DynamicResource TextMutedBrush}" />
+                            </Grid>
+                        </ToggleButton>
+                        <ScrollViewer Name="BodyScroll" Grid.Row="1" VerticalScrollBarVisibility="Auto"
+                                      HorizontalScrollBarVisibility="Disabled" IsVisible="{TemplateBinding IsExpanded}">
+                            <ContentPresenter Name="PART_ContentPresenter" Margin="14,0,14,14"
+                                              Content="{TemplateBinding Content}"
+                                              ContentTemplate="{TemplateBinding ContentTemplate}" />
+                        </ScrollViewer>
+                    </Grid>
+                </Border>
+            </ControlTemplate>
+        </Setter>
+        <Style Selector="^:expanded /template/ PathIcon#HeaderChevron">
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+            <Setter Property="RenderTransform" Value="rotate(180deg)" />
+        </Style>
+        <Style Selector="^:active /template/ Border#StepDot">
+            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
+        </Style>
+        <Style Selector="^:active /template/ TextBlock#StepNumberText">
+            <Setter Property="Foreground" Value="White" />
+        </Style>
+        <Style Selector="^:active /template/ TextBlock#StateChipText">
+            <Setter Property="Text" Value="进行中" />
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryHoverBrush}" />
+        </Style>
+        <Style Selector="^:done /template/ Border#StepDot">
+            <Setter Property="Background" Value="{DynamicResource SuccessSoftBrush}" />
+        </Style>
+        <Style Selector="^:done /template/ TextBlock#StepNumberText">
+            <Setter Property="IsVisible" Value="False" />
+        </Style>
+        <Style Selector="^:done /template/ PathIcon#DoneCheck">
+            <Setter Property="IsVisible" Value="True" />
+        </Style>
+        <Style Selector="^:done /template/ TextBlock#StateChipText">
+            <Setter Property="Text" Value="已完成" />
+            <Setter Property="Foreground" Value="{DynamicResource SuccessBrush}" />
+        </Style>
+    </ControlTheme>
+
+    <!-- Recent-project tile: the sleeve fills the left three quarters; the 72px disc sits behind
+         it with its centre on the sleeve's right edge, so half pokes out. The hub hole and the
+         sheen stay outside the spin so the lighting does not rotate with the face. -->
+    <ControlTheme x:Key="{x:Type controls:RecentProjectCard}" TargetType="controls:RecentProjectCard">
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Grid Background="Transparent" Height="96" ColumnDefinitions="3*,*">
+                    <Grid Name="PART_DiscHost" Grid.Column="1" Width="72" Height="72" HorizontalAlignment="Left"
+                          Margin="-36,0,0,0" VerticalAlignment="Center">
+                        <Grid.Transitions>
+                            <Transitions>
+                                <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.25" Easing="CubicEaseOut" />
+                            </Transitions>
+                        </Grid.Transitions>
+                        <Grid Name="PART_DiscSpin" RenderTransformOrigin="50%,50%">
+                            <Ellipse Fill="{DynamicResource DiscBodyBrush}" />
+                            <Border CornerRadius="36" BorderBrush="{DynamicResource DividerBrush}" BorderThickness="1" ClipToBounds="True">
+                                <Border.Background>
+                                    <ImageBrush Source="{TemplateBinding ThumbnailSource}" Stretch="UniformToFill" />
+                                </Border.Background>
+                            </Border>
+                        </Grid>
+                        <Ellipse IsHitTestVisible="False">
+                            <Ellipse.Fill>
+                                <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+                                    <GradientStop Color="{DynamicResource ShineSoftColor}" Offset="0" />
+                                    <GradientStop Color="{DynamicResource ShineClearColor}" Offset="0.55" />
+                                </LinearGradientBrush>
+                            </Ellipse.Fill>
+                        </Ellipse>
+                        <Ellipse Width="10" Height="10" IsHitTestVisible="False" Fill="{DynamicResource BackgroundBrush}"
+                                 Stroke="{DynamicResource DividerBrush}" StrokeThickness="1" />
+                    </Grid>
+                    <Border Name="PART_Card" Background="{DynamicResource Surface1Brush}" BorderBrush="{DynamicResource DividerBrush}"
+                            BorderThickness="1" CornerRadius="{StaticResource RadiusCard}" Padding="16,0,46,0">
+                        <Border.Transitions>
+                            <Transitions>
+                                <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.25" Easing="CubicEaseOut" />
+                            </Transitions>
+                        </Border.Transitions>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="{TemplateBinding Title}" Theme="{StaticResource RowText}" FontWeight="Medium" />
+                            <Grid Margin="0,5,0,0" ColumnDefinitions="Auto,Auto,*">
+                                <Border Padding="5,1" CornerRadius="{StaticResource RadiusChip}" Background="{DynamicResource Surface3Brush}"
+                                        VerticalAlignment="Center">
+                                    <TextBlock Text="{TemplateBinding FamilyLabel}" Theme="{StaticResource BadgeText}" />
+                                </Border>
+                                <controls:LucideIcon Grid.Column="1" Kind="Folder" Width="12" Height="12" Margin="10,0,0,0"
+                                                     VerticalAlignment="Center" Foreground="{DynamicResource TextMutedBrush}" />
+                                <Grid Name="PART_LocationViewport" Grid.Column="2" Margin="5,0,0,0" ClipToBounds="True">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Name="PART_LocationText" Text="{TemplateBinding LocationText}"
+                                                   Theme="{StaticResource InlineText}" FontSize="12" TextWrapping="NoWrap"
+                                                   VerticalAlignment="Center" />
+                                    </StackPanel>
+                                    <Rectangle Width="14" HorizontalAlignment="Right" IsHitTestVisible="False">
+                                        <Rectangle.Fill>
+                                            <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,0%">
+                                                <GradientStop Color="{DynamicResource Surface1FadeColor}" Offset="0" />
+                                                <GradientStop Color="{DynamicResource Surface1Color}" Offset="1" />
+                                            </LinearGradientBrush>
+                                        </Rectangle.Fill>
+                                    </Rectangle>
+                                </Grid>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </ControlTemplate>
+        </Setter>
+        <Style Selector="^:pointerover /template/ Border#PART_Card">
+            <Setter Property="RenderTransform" Value="translateX(-6px)" />
+        </Style>
+        <Style Selector="^:pointerover /template/ Grid#PART_DiscHost">
+            <Setter Property="RenderTransform" Value="translateX(10px)" />
+        </Style>
+        <Style Selector="^:disabled">
+            <Setter Property="Opacity" Value="0.4" />
+        </Style>
+    </ControlTheme>
+</ResourceDictionary>

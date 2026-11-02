@@ -99,11 +99,28 @@ jobs:
 
   package:
     needs: [metadata, validate]
-    runs-on: windows-latest
-    timeout-minutes: 30
+    name: package (${{ matrix.rid }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 40
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - rid: win-x64
+            os: windows-latest
+          - rid: linux-x64
+            os: ubuntu-latest
+          - rid: linux-arm64
+            os: ubuntu-24.04-arm
+          - rid: osx-arm64
+            os: macos-latest
+          # Built on the Apple silicon runner; its run-time smoke checks are skipped there.
+          - rid: osx-x64
+            os: macos-latest
     env:
       DOTNET_CLI_TELEMETRY_OPTOUT: '1'
       DOTNET_NOLOGO: '1'
+      AVALONIA_TELEMETRY_OPTOUT: '1'
       RELEASE_TAG: ${{ needs.metadata.outputs.tag }}
     steps:
       - uses: actions/checkout@v4
@@ -115,48 +132,22 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
-      - name: Build and verify standalone EXE
-        run: ./packaging/Build-Release.ps1 -Tag $env:RELEASE_TAG
-
-      - name: Prepare release notes
-        run: |
-          $metadata = ./packaging/Get-ReleaseMetadata.ps1 -Tag $env:RELEASE_TAG -RequireReleaseNotes
-          $directory = Join-Path 'artifacts/release' $metadata.Tag
-          $checksum = (Get-Content -LiteralPath (Join-Path $directory 'SHA256SUMS.txt') -Raw).Trim()
-          $notes = @(
-            $metadata.Notes
-            ''
-            '### 下载与运行'
-            ''
-            '下载下方 win-x64.exe 后直接运行，支持 Windows 10 2004+ / Windows 11 x64，已内置 .NET 运行时。'
-            '此便携 EXE 未进行代码签名。即时流式刻录仍为实验性功能；硬件实测范围以仓库验证记录为准。'
-            ''
-            '### SHA-256'
-            ''
-            '```text'
-            $checksum
-            '```'
-            ''
-            "Source commit: $env:RELEASE_COMMIT"
-          ) -join "`n"
-          Set-Content -LiteralPath (Join-Path $directory 'release-notes.md') -Value $notes -Encoding utf8
-        env:
-          RELEASE_COMMIT: ${{ needs.metadata.outputs.commit }}
+      - name: Build and verify the ${{ matrix.rid }} package
+        run: ./packaging/Build-Release.ps1 -Tag $env:RELEASE_TAG -RuntimeIdentifier ${{ matrix.rid }}
 
       - uses: actions/upload-artifact@v4
         with:
-          name: release-${{ needs.metadata.outputs.tag }}
+          name: release-${{ needs.metadata.outputs.tag }}-${{ matrix.rid }}
           if-no-files-found: error
           retention-days: 14
           path: |
-            artifacts/release/${{ needs.metadata.outputs.tag }}/*.exe
-            artifacts/release/${{ needs.metadata.outputs.tag }}/SHA256SUMS.txt
-            artifacts/release/${{ needs.metadata.outputs.tag }}/release-notes.md
+            artifacts/release/${{ needs.metadata.outputs.tag }}/DiscImageStudio-*
+            artifacts/release/${{ needs.metadata.outputs.tag }}/SHA256SUMS-${{ matrix.rid }}.txt
 
   draft:
     needs: [metadata, package]
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     permissions:
       contents: write
     env:
@@ -166,12 +157,56 @@ jobs:
       RELEASE_COMMIT: ${{ needs.metadata.outputs.commit }}
       IS_PRERELEASE: ${{ needs.metadata.outputs.prerelease }}
     steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.metadata.outputs.commit }}
+          persist-credentials: false
+
       - uses: actions/download-artifact@v4
         with:
-          name: release-${{ needs.metadata.outputs.tag }}
+          pattern: release-${{ needs.metadata.outputs.tag }}-*
+          merge-multiple: true
           path: release
 
-      - name: Create or refresh draft with the EXE attachment
+      - name: Verify packages and prepare release notes
+        run: |
+          Push-Location release
+          try {
+            $sums = @(Get-ChildItem -Filter 'SHA256SUMS-*.txt' | Sort-Object Name)
+            if ($sums.Count -ne 5) { throw "Expected five platform checksum files, found $($sums.Count)." }
+            $lines = foreach ($file in $sums) { (Get-Content -LiteralPath $file.FullName) | Where-Object { $_ } }
+            foreach ($line in $lines) {
+              $hash, $name = $line -split '\s+', 2
+              if ((Get-FileHash -LiteralPath $name -Algorithm SHA256).Hash -ine $hash) { throw "Checksum mismatch: $name" }
+            }
+            [IO.File]::WriteAllText((Join-Path $PWD 'SHA256SUMS.txt'), (($lines -join "`n") + "`n"), [Text.UTF8Encoding]::new($false))
+          } finally { Pop-Location }
+
+          $metadata = ./packaging/Get-ReleaseMetadata.ps1 -Tag $env:RELEASE_TAG -RequireReleaseNotes
+          $notes = @(
+            $metadata.Notes
+            ''
+            '### 下载与运行'
+            ''
+            '| 平台 | 文件 | 说明 |'
+            '| --- | --- | --- |'
+            "| Windows 10 2004+ / 11 x64 | ``DiscImageStudio-$env:RELEASE_TAG-win-x64.exe`` | 直接运行，内置 .NET 运行时；未代码签名。 |"
+            "| Linux x64 / arm64 | ``DiscImageStudio-$env:RELEASE_TAG-linux-<arch>.tar.gz`` | 解压后运行 ``DiscImageStudio``，或执行 ``install.sh`` 安装到当前用户菜单。刻录需加入 cdrom / optical 组。 |"
+            "| macOS 14+ Apple 芯片 / Intel | ``DiscImageStudio-$env:RELEASE_TAG-osx-<arch>.dmg`` 或 ``.zip`` | 仅 ad-hoc 签名：首次打开请右键选择“打开”，或在“隐私与安全性”中允许。 |"
+            ''
+            '即时流式刻录仍为实验性功能；Linux（SG_IO）与 macOS（IOKit）刻录后端尚待实机验证，请先用测试盘确认。硬件实测范围以仓库验证记录为准。'
+            ''
+            '### SHA-256'
+            ''
+            '```text'
+            (Get-Content -LiteralPath 'release/SHA256SUMS.txt' -Raw).Trim()
+            '```'
+            ''
+            "Source commit: $env:RELEASE_COMMIT"
+          ) -join "`n"
+          Set-Content -LiteralPath 'release/release-notes.md' -Value $notes -Encoding utf8
+
+      - name: Create or refresh draft with the platform packages
         run: |
           # Never replace assets on an already published release.
           $pages = gh api --paginate --slurp "repos/$env:GH_REPO/releases?per_page=100"
@@ -204,20 +239,18 @@ jobs:
             throw 'The release tag already points to a different commit. Use a new version.'
           }
 
-          $exe = "release/DiscImageStudio-$env:RELEASE_TAG-win-x64.exe"
-          $expectedHash = ((Get-Content 'release/SHA256SUMS.txt' -Raw).Trim() -split '\s+')[0]
-          if ((Get-FileHash -LiteralPath $exe -Algorithm SHA256).Hash -ine $expectedHash) {
-            throw 'Downloaded EXE checksum does not match.'
-          }
+          $assets = @(Get-ChildItem -LiteralPath release -File |
+            Where-Object { $_.Name -like "DiscImageStudio-$env:RELEASE_TAG-*" -or $_.Name -eq 'SHA256SUMS.txt' } |
+            ForEach-Object { $_.FullName })
           $options = @('--title', "Disc Image Studio $env:RELEASE_TAG", '--notes-file', 'release/release-notes.md')
           if ($existing.Count -eq 1) {
-            gh release upload $env:RELEASE_TAG $exe --clobber
-            if ($LASTEXITCODE -ne 0) { throw 'EXE upload failed.' }
+            gh release upload $env:RELEASE_TAG @assets --clobber
+            if ($LASTEXITCODE -ne 0) { throw 'Package upload failed.' }
             gh release edit $env:RELEASE_TAG @options --draft=true "--prerelease=$env:IS_PRERELEASE"
           } else {
             $options += @('--draft', '--verify-tag', '--target', $env:RELEASE_COMMIT)
             if ($env:IS_PRERELEASE -eq 'true') { $options += '--prerelease' }
-            gh release create $env:RELEASE_TAG $exe @options
+            gh release create $env:RELEASE_TAG @assets @options
           }
           if ($LASTEXITCODE -ne 0) { throw 'Saving the draft release failed.' }
           "Draft ready: https://github.com/$env:GH_REPO/releases" >> $env:GITHUB_STEP_SUMMARY

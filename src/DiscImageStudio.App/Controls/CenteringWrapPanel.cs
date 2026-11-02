@@ -1,23 +1,15 @@
-using System.Windows;
-using System.Windows.Controls;
+using Avalonia;
+using Avalonia.Controls;
 
 namespace DiscImageStudio.Controls;
 
-/// <summary>
-/// WrapPanel that centers every row. The stock WrapPanel left-aligns each row, so a partly
-/// filled row — the lone fifth "快速创建" tile once the window is narrow — hangs off the left
-/// edge of a grid whose other rows are full.
-/// </summary>
+/// <summary>A wrap panel whose rows are centred horizontally (start-page template tiles).</summary>
 public class CenteringWrapPanel : Panel
 {
     protected override Size MeasureOverride(Size availableSize)
     {
-        double rowWidth = 0;
-        double rowHeight = 0;
-        double widestRow = 0;
-        double height = 0;
-
-        foreach (UIElement child in InternalChildren)
+        double rowWidth = 0, rowHeight = 0, widestRow = 0, height = 0;
+        foreach (Control child in Children)
         {
             child.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
             Size desired = child.DesiredSize;
@@ -42,12 +34,9 @@ public class CenteringWrapPanel : Panel
 
     protected override Size ArrangeOverride(Size finalSize)
     {
-        List<(UIElement Child, Size Size)> row = [];
-        double rowWidth = 0;
-        double rowHeight = 0;
-        double top = 0;
-
-        foreach (UIElement child in InternalChildren)
+        List<(Control Child, Size Size)> row = [];
+        double rowWidth = 0, rowHeight = 0, top = 0;
+        foreach (Control child in Children)
         {
             Size desired = child.DesiredSize;
             if (rowWidth > 0 && rowWidth + desired.Width > finalSize.Width)
@@ -66,15 +55,11 @@ public class CenteringWrapPanel : Panel
         return finalSize;
     }
 
-    private static double ArrangeRow(
-        List<(UIElement Child, Size Size)> row,
-        double rowWidth,
-        double rowHeight,
-        double top,
-        double width)
+    private static double ArrangeRow(List<(Control Child, Size Size)> row, double rowWidth, double rowHeight,
+        double top, double width)
     {
         double left = Math.Max(0, (width - rowWidth) / 2);
-        foreach ((UIElement child, Size size) in row)
+        foreach ((Control child, Size size) in row)
         {
             child.Arrange(new Rect(left, top, size.Width, size.Height));
             left += size.Width;

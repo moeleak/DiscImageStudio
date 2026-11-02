@@ -1,0 +1,13 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="DiscImageStudio.Controls.MarqueeText">
+    <!-- Single-line label centred in its width; when it overflows it scrolls to the tail while
+         IsActive and carries the full text as a tooltip. The horizontal StackPanel measures
+         the label unconstrained so the whole line exists to scroll through. -->
+    <Grid x:Name="Viewport" ClipToBounds="True">
+        <StackPanel Orientation="Horizontal">
+            <TextBlock x:Name="LabelText" Theme="{StaticResource RowText}" TextTrimming="None"
+                       TextWrapping="NoWrap" VerticalAlignment="Center" />
+        </StackPanel>
+    </Grid>
+</UserControl>

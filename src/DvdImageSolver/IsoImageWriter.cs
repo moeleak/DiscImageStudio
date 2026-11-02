@@ -51,7 +51,7 @@ internal static class IsoImageWriter
         ValidatePayload(payloads);
         string templateFullPath = Path.GetFullPath(templatePath);
         string outputFullPath = Path.GetFullPath(outputPath);
-        if (string.Equals(templateFullPath, outputFullPath, StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(templateFullPath, outputFullPath, DiscImageStudio.Core.PlatformPaths.PathComparison))
         {
             throw new ArgumentException("--iso-template and --iso-output must be different files.");
         }
@@ -448,16 +448,20 @@ internal static class IsoImageWriter
         }
     }
 
+    /// <summary>Requests sparse allocation before the image is extended. NTFS needs an explicit
+    /// FSCTL; on Unix file systems (ext4, XFS, Btrfs, APFS) extending with SetLength already
+    /// leaves an unallocated hole, so the call is a successful no-op there.</summary>
     internal static bool TryMarkSparse(SafeFileHandle handle)
-        => DeviceIoControl(
-            handle,
-            FsctlSetSparse,
-            IntPtr.Zero,
-            0,
-            IntPtr.Zero,
-            0,
-            out _,
-            IntPtr.Zero);
+        => !OperatingSystem.IsWindows()
+            || DeviceIoControl(
+                handle,
+                FsctlSetSparse,
+                IntPtr.Zero,
+                0,
+                IntPtr.Zero,
+                0,
+                out _,
+                IntPtr.Zero);
 
     [DllImport("kernel32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]

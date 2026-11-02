@@ -4,5 +4,10 @@
     <VersionSuffix></VersionSuffix>
     <Deterministic>true</Deterministic>
     <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
+    <!-- Shared third-party versions. SkiaSharp must match the version Avalonia.Skia depends on.
+         Keep a single PropertyGroup: the release scripts read VersionPrefix from it. -->
+    <SkiaSharpVersion>3.119.4</SkiaSharpVersion>
+    <LibTiffVersion>2.4.660</LibTiffVersion>
+    <AvaloniaVersion>12.1.4</AvaloniaVersion>
   </PropertyGroup>
 </Project>

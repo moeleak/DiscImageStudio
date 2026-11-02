@@ -151,7 +151,7 @@ internal static class BluRaySessionCleanupTests
         List<string> operations = [];
         List<string> warnings = ["Earlier session unlock warning"];
         InvalidOperationException observed = Throws<InvalidOperationException>(() =>
-            WindowsImapiBurner.CompleteBurnCleanup(writeFailure, warnings,
+            OpticalBurnWorkflows.CompleteBurnCleanup(writeFailure, warnings,
                 () => { operations.Add("format"); throw formatFailure; },
                 () => { operations.Add("recorder"); throw recorderFailure; }));
         Require(operations.SequenceEqual(new[] { "format", "recorder" }),
@@ -172,7 +172,7 @@ internal static class BluRaySessionCleanupTests
         COMException failure = new("Format release failed", unchecked((int)0x800700AA));
         List<string> operations = [];
         InvalidOperationException observed = Throws<InvalidOperationException>(() =>
-            WindowsImapiBurner.CompleteBurnCleanup(null, [],
+            OpticalBurnWorkflows.CompleteBurnCleanup(null, [],
                 () => { operations.Add("format"); throw failure; },
                 () => operations.Add("recorder")));
         Require(operations.SequenceEqual(new[] { "format", "recorder" })
@@ -181,7 +181,7 @@ internal static class BluRaySessionCleanupTests
             "a completed write with failed COM cleanup is explicitly reported and still releases the recorder");
 
         operations.Clear();
-        WindowsImapiBurner.CompleteBurnCleanup(null, [],
+        OpticalBurnWorkflows.CompleteBurnCleanup(null, [],
             () => operations.Add("format"), () => operations.Add("recorder"));
         Require(operations.SequenceEqual(new[] { "format", "recorder" }),
             "ordinary completion releases both objects exactly once before returning success");
@@ -193,7 +193,7 @@ internal static class BluRaySessionCleanupTests
             { new IOException("Source ended early"), new OperationCanceledException("Cancelled before the next WRITE") })
         {
             int releases = 0;
-            Exception observed = Throws<Exception>(() => WindowsImapiBurner.CompleteBurnCleanup(
+            Exception observed = Throws<Exception>(() => OpticalBurnWorkflows.CompleteBurnCleanup(
                 failure, [], () => releases++, () => releases++));
             Require(ReferenceEquals(observed, failure) && releases == 2,
                 "successful outer cleanup rethrows the same failure, including cancellation, after both releases");

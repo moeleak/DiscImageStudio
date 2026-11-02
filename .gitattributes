@@ -1,7 +1,9 @@
 * text=auto
 *.cs text eol=crlf
 *.xaml text eol=crlf
+*.axaml text eol=crlf
 *.ps1 text eol=crlf
 *.slnx text eol=crlf
+*.sh text eol=lf
 *.png binary
 *.ico binary

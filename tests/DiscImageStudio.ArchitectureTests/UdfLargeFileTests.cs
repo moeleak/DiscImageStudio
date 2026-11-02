@@ -1,10 +1,7 @@
 using System.Buffers.Binary;
-using System.ComponentModel;
 using System.IO;
-using System.Runtime.InteropServices;
 using System.Text;
 using DiscImageStudio.BluRay;
-using Microsoft.Win32.SafeHandles;
 
 /// <summary>Exercises a real source larger than 4 GiB without creating an ISO on disk.
 /// The source is marked sparse before its length is extended; the destination only
@@ -103,10 +100,8 @@ internal static class UdfLargeFileTests
         using FileStream source = new(path, FileMode.CreateNew, FileAccess.ReadWrite, FileShare.Read);
         // FSCTL_SET_SPARSE must succeed before SetLength: a failed sparse operation
         // must never turn this test into a real four-gigabyte allocation.
-        if (!DeviceIoControl(source.SafeFileHandle, 0x000900C4, IntPtr.Zero, 0,
-            IntPtr.Zero, 0, out _, IntPtr.Zero))
-            throw new Win32Exception(Marshal.GetLastWin32Error(), "The large-file test requires sparse-file support; file length was not extended.");
-        Require((File.GetAttributes(path) & FileAttributes.SparseFile) != 0,
+        SparseFiles.MarkSparse(source, "The large-file test requires sparse-file support; file length was not extended.");
+        Require(SparseFiles.HasSparseAttribute(path),
             "the source must report the sparse attribute before its length is extended");
         source.SetLength(SourceLength);
         source.Flush(flushToDisk: true);
@@ -283,23 +278,7 @@ internal static class UdfLargeFileTests
         }
     }
 
-    private static long GetAllocatedBytes(string path)
-    {
-        Marshal.SetLastPInvokeError(0);
-        uint low = GetCompressedFileSize(path, out uint high);
-        int error = Marshal.GetLastWin32Error();
-        if (low == uint.MaxValue && error != 0) throw new Win32Exception(error);
-        return checked((long)(((ulong)high << 32) | low));
-    }
-
-    [DllImport("kernel32.dll", SetLastError = true)]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static extern bool DeviceIoControl(SafeFileHandle device, uint controlCode,
-        IntPtr inputBuffer, uint inputBufferSize, IntPtr outputBuffer, uint outputBufferSize,
-        out uint bytesReturned, IntPtr overlapped);
-
-    [DllImport("kernel32.dll", EntryPoint = "GetCompressedFileSizeW", CharSet = CharSet.Unicode, SetLastError = true)]
-    private static extern uint GetCompressedFileSize(string filename, out uint high);
+    private static long GetAllocatedBytes(string path) => SparseFiles.GetAllocatedBytes(path);
 
     private static void Require(bool condition, string message)
     { if (!condition) throw new InvalidOperationException("Large UDF file: " + message); }
