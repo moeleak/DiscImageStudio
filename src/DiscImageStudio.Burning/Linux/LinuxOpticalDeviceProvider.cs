@@ -28,7 +28,8 @@ internal sealed class LinuxOpticalDeviceProvider(string sysClassBlock = "/sys/cl
             if (!IsDriveName(name)) continue;
             string vendor = ReadAttribute(directory, "device/vendor");
             string model = ReadAttribute(directory, "device/model");
-            string devicePath = Path.Combine(devDirectory, name);
+            // Device ids are Linux paths: join with "/" whatever the host separator is.
+            string devicePath = devDirectory.TrimEnd('/') + "/" + name;
             string label = string.Join(" ", new[] { vendor, model }.Where(text => text.Length > 0));
             string majorMinor = ReadAttribute(directory, "dev");
             IReadOnlyList<string> mountPoints = mounts.TryGetValue(majorMinor, out List<string>? points) ? points : [];

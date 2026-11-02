@@ -196,7 +196,10 @@ internal static class CalibrationPhotoCanvasTests
             GCHandle handle = GCHandle.Alloc(pixel, GCHandleType.Pinned);
             try { bitmap.CopyPixels(new PixelRect(x + dx, y + dy, 1, 1), handle.AddrOfPinnedObject(), 4, 4); }
             finally { handle.Free(); }
-            if (cyan ? pixel[0] > 180 && pixel[1] > 180 && pixel[2] < 100 : pixel[0] < 90 && pixel[1] > 80 && pixel[1] < 210 && pixel[2] > 180) return true;
+            // Skia renders BGRA on Windows/Linux and RGBA on macOS; compare in B, G, R order.
+            bool rgba = bitmap.Format == Avalonia.Platform.PixelFormats.Rgba8888;
+            byte blue = rgba ? pixel[2] : pixel[0], green = pixel[1], red = rgba ? pixel[0] : pixel[2];
+            if (cyan ? blue > 180 && green > 180 && red < 100 : blue < 90 && green > 80 && green < 210 && red > 180) return true;
         }
         return false;
     }
