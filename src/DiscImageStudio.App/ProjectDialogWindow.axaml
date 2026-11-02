@@ -1,10 +1,11 @@
 <Window x:Class="DiscImageStudio.ProjectDialogWindow"
         xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="using:DiscImageStudio.Localization"
         xmlns:vm="using:DiscImageStudio.ViewModels"
         x:DataType="vm:ProjectDialogViewModel"
         xmlns:controls="using:DiscImageStudio.Controls"
-        Title="新建工程"
+        Title="{loc:Text Xaml.NewProject}"
         Width="992" Height="640"
         WindowStartupLocation="CenterOwner"
         CanResize="False"
@@ -105,10 +106,10 @@
                     </ListBox>
                     <StackPanel Grid.Row="0" Margin="0,0,0,6"
                                 IsVisible="{Binding EditModeVisible}">
-                        <TextBlock Theme="{StaticResource FieldLabel}" Text="换用预设" />
+                        <TextBlock Theme="{StaticResource FieldLabel}" Text="{loc:Text Xaml.ChangePreset}" />
                         <TextBlock Theme="{StaticResource CompactHint}" Margin="0,4,0,0"
                                    TextWrapping="Wrap"
-                                   Text="选择其他预设会用它的几何参数覆盖当前参数，切换前会先确认。" />
+                                   Text="{loc:Text Xaml.SelectingAnotherPresetReplacesTheCurrentGeometryParametersAfter}" />
                     </StackPanel>
                     <ListBox Grid.Row="1" ItemsSource="{Binding VisibleTemplates}"
                              SelectedItem="{Binding SelectedTemplate}"
@@ -136,7 +137,7 @@
                                                 Padding="4,1" CornerRadius="{StaticResource RadiusChip}"
                                                 Background="{DynamicResource Surface3Brush}"
                                                 IsVisible="{Binding UserBadgeVisible}">
-                                            <TextBlock Text="自定" Theme="{StaticResource MicroText}" />
+                                            <TextBlock Text="{loc:Text Xaml.Custom}" Theme="{StaticResource MicroText}" />
                                         </Border>
                                     </Grid>
                                     <!-- Preset names can outrun the card: the line scrolls
@@ -174,48 +175,48 @@
                         </Grid.RowDefinitions>
                         <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto">
                             <StackPanel>
-                                <TextBlock Text="预设详细信息" Theme="{StaticResource PanelTitle}"
+                                <TextBlock Text="{loc:Text Xaml.PresetDetails}" Theme="{StaticResource PanelTitle}"
                                            Margin="0,0,0,14" />
-                                <TextBlock Theme="{StaticResource FieldLabel}" Text="工程名" />
+                                <TextBlock Theme="{StaticResource FieldLabel}" Text="{loc:Text Xaml.ProjectName}" />
                                 <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"
                                          MaxLength="80" />
                                 <WrapPanel Margin="0,16,0,0" VerticalAlignment="Top">
                                     <StackPanel Width="116" Margin="0,0,12,14">
-                                        <TextBlock Theme="{StaticResource FieldLabel}" Text="内半径 r0 (mm)" />
+                                        <TextBlock Theme="{StaticResource FieldLabel}" Text="{loc:Text Xaml.InnerR0Mm}" />
                                         <TextBox Text="{Binding InnerRadiusText, UpdateSourceTrigger=PropertyChanged}" />
                                     </StackPanel>
                                     <StackPanel Width="116" Margin="0,0,12,14">
-                                        <TextBlock Theme="{StaticResource FieldLabel}" Text="外半径 r1 (mm)" />
+                                        <TextBlock Theme="{StaticResource FieldLabel}" Text="{loc:Text Xaml.OuterR1Mm}" />
                                         <TextBox Text="{Binding OuterRadiusText, UpdateSourceTrigger=PropertyChanged}" />
                                     </StackPanel>
                                     <StackPanel Width="116" Margin="0,0,12,14">
-                                        <TextBlock Theme="{StaticResource FieldLabel}" Text="扇区数" />
+                                        <TextBlock Theme="{StaticResource FieldLabel}" Text="{loc:Text Xaml.Sectors}" />
                                         <TextBox Text="{Binding SectorsText, UpdateSourceTrigger=PropertyChanged}" />
                                     </StackPanel>
                                     <StackPanel Width="124" Margin="0,0,16,14"
                                                 IsVisible="{Binding IsDvdFieldsVisible}">
-                                        <TextBlock Theme="{StaticResource FieldLabel}" Text="相对一次项" />
+                                        <TextBlock Theme="{StaticResource FieldLabel}" Text="{loc:Text Xaml.LinearTerm}" />
                                         <TextBox Text="{Binding PitchLinearText, UpdateSourceTrigger=PropertyChanged}" />
                                     </StackPanel>
                                     <StackPanel Width="124" Margin="0,0,16,14"
                                                 IsVisible="{Binding IsDvdFieldsVisible}">
-                                        <TextBlock Theme="{StaticResource FieldLabel}" Text="相对二次项" />
+                                        <TextBlock Theme="{StaticResource FieldLabel}" Text="{loc:Text Xaml.QuadraticTerm}" />
                                         <TextBox Text="{Binding PitchQuadraticText, UpdateSourceTrigger=PropertyChanged}" />
                                     </StackPanel>
                                     <StackPanel Width="124" Margin="0,0,0,14"
                                                 IsVisible="{Binding IsDvdFieldsVisible}">
-                                        <TextBlock Theme="{StaticResource FieldLabel}" Text="相对三次项" />
+                                        <TextBlock Theme="{StaticResource FieldLabel}" Text="{loc:Text Xaml.CubicTerm}" />
                                         <TextBox Text="{Binding PitchCubicText, UpdateSourceTrigger=PropertyChanged}" />
                                     </StackPanel>
                                     <TextBlock Theme="{StaticResource CompactHint}"
                                                Margin="0,0,0,14" TextWrapping="Wrap"
                                                IsVisible="{Binding IsBluRayFieldsVisible}"
-                                               Text="单层 BD-R：扇区数须为 32 的倍数，使用恒定轨距与 0° 起始角。" />
+                                               Text="{loc:Text Xaml.SingleLayerBDRSectorsMustBeAMultiple}" />
                                 </WrapPanel>
                                 <StackPanel Margin="0,0,0,4"
                                             IsVisible="{Binding EditModeVisible}">
                                     <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
-                                        <TextBlock Text="盘型" Theme="{StaticResource FieldLabel}"
+                                        <TextBlock Text="{loc:Text Xaml.DiscType}" Theme="{StaticResource FieldLabel}"
                                                    VerticalAlignment="Center" Margin="0,0,8,0" />
                                         <Border Padding="6,2" CornerRadius="{StaticResource RadiusChip}"
                                                 Background="{DynamicResource Surface3Brush}"
@@ -225,7 +226,7 @@
                                     </StackPanel>
                                     <StackPanel Orientation="Horizontal">
                                         <Button Theme="{StaticResource CompactButton}"
-                                                Content="将此套参数保存为预设"
+                                                Content="{loc:Text Xaml.SaveParametersAsPreset}"
                                                 Command="{Binding SaveAsPresetCommand}" />
                                         <TextBlock Text="{Binding SavedPresetMessage}"
                                                    Theme="{StaticResource HintText}" VerticalAlignment="Center"
@@ -239,14 +240,14 @@
                             </StackPanel>
                         </ScrollViewer>
                         <StackPanel Grid.Row="1" Margin="0,14,0,0">
-                            <TextBlock Theme="{StaticResource FieldLabel}" Margin="0,0,0,6" Text="保存位置" />
+                            <TextBlock Theme="{StaticResource FieldLabel}" Margin="0,0,0,6" Text="{loc:Text Xaml.SaveLocation}" />
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
                                 <TextBox Text="{Binding SaveDirectory, UpdateSourceTrigger=PropertyChanged}" />
-                                <Button Grid.Column="1" Theme="{StaticResource BrowseButton}" Content="浏览…"
+                                <Button Grid.Column="1" Theme="{StaticResource BrowseButton}" Content="{loc:Text Xaml.Browse}"
                                         Command="{Binding BrowseSavePathCommand}" />
                             </Grid>
                             <TextBlock Theme="{StaticResource HintText}" Margin="0,8,0,0"
@@ -264,7 +265,7 @@
                     <ColumnDefinition Width="10" />
                     <ColumnDefinition Width="Auto" SharedSizeGroup="DialogAction" />
                 </Grid.ColumnDefinitions>
-                <Button Grid.Column="0" Theme="{StaticResource SecondaryButton}" Content="取消"
+                <Button Grid.Column="0" Theme="{StaticResource SecondaryButton}" Content="{loc:Text Xaml.Cancel}"
                         Click="Cancel_Click" />
                 <Button Grid.Column="2" Theme="{StaticResource PrimaryButton}" Content="{Binding ConfirmLabel}"
                         Command="{Binding ConfirmCommand}" />

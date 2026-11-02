@@ -1,0 +1,42 @@
+{
+  "图片文件": {
+    "zh-CN": "图片文件",
+    "zh-TW": "圖片檔案",
+    "en": "Image files"
+  },
+  "所有文件": {
+    "zh-CN": "所有文件",
+    "zh-TW": "所有檔案",
+    "en": "All files"
+  },
+  "未检测到可用的 CD/DVD/BD 刻录机（{0}）。": {
+    "zh-CN": "未检测到可用的 CD/DVD/BD 刻录机（{0}）。",
+    "zh-TW": "未偵測到可用的 CD/DVD/BD 燒錄機（{0}）。",
+    "en": "No CD/DVD/BD recorder was found ({0})."
+  },
+  " · {0} 刻录为实验性功能，请先用测试盘验证": {
+    "zh-CN": " · {0} 刻录为实验性功能，请先用测试盘验证",
+    "zh-TW": " · {0} 燒錄為實驗性功能，請先以測試光碟驗證",
+    "en": " · {0} burning is experimental; verify with a test disc first"
+  },
+  "Avalonia UI — MIT 许可协议": {
+    "zh-CN": "Avalonia UI — MIT 许可协议",
+    "zh-TW": "Avalonia UI — MIT 授權條款",
+    "en": "Avalonia UI — MIT License"
+  },
+  "SkiaSharp / HarfBuzzSharp — MIT 许可协议": {
+    "zh-CN": "SkiaSharp / HarfBuzzSharp — MIT 许可协议",
+    "zh-TW": "SkiaSharp / HarfBuzzSharp — MIT 授權條款",
+    "en": "SkiaSharp / HarfBuzzSharp — MIT License"
+  },
+  "BitMiracle.LibTiff.NET — BSD 许可协议": {
+    "zh-CN": "BitMiracle.LibTiff.NET — BSD 许可协议",
+    "zh-TW": "BitMiracle.LibTiff.NET — BSD 授權條款",
+    "en": "BitMiracle.LibTiff.NET — BSD License"
+  },
+  "Lucide Icons（经 MahApps.Metro.IconPacks 提取）— ISC / MIT 许可协议": {
+    "zh-CN": "Lucide Icons（经 MahApps.Metro.IconPacks 提取）— ISC / MIT 许可协议",
+    "zh-TW": "Lucide Icons（經 MahApps.Metro.IconPacks 擷取）— ISC / MIT 授權條款",
+    "en": "Lucide Icons (extracted via MahApps.Metro.IconPacks) — ISC / MIT Licenses"
+  }
+}

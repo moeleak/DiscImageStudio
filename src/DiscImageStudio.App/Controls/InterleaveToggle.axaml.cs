@@ -1,3 +1,4 @@
+using DiscImageStudio.Localization;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Data;
@@ -7,12 +8,12 @@ namespace DiscImageStudio.Controls;
 public partial class InterleaveToggle : UserControl
 {
     public static readonly StyledProperty<string> LabelProperty =
-        AvaloniaProperty.Register<InterleaveToggle, string>(nameof(Label), "启用 CD-DA 延迟交织");
+        AvaloniaProperty.Register<InterleaveToggle, string>(nameof(Label), L.T("启用 CD-DA 延迟交织"));
     public static readonly StyledProperty<bool> IsCheckedProperty =
         AvaloniaProperty.Register<InterleaveToggle, bool>(nameof(IsChecked), defaultBindingMode: BindingMode.TwoWay);
     public static readonly StyledProperty<string> HintProperty =
         AvaloniaProperty.Register<InterleaveToggle, string>(nameof(Hint),
-            "如您在盘片制作时勾选了“启用 CD-DA 延迟交织”，则应勾选该选项。");
+            L.T("如您在盘片制作时勾选了“启用 CD-DA 延迟交织”，则应勾选该选项。"));
 
     public InterleaveToggle()
     {

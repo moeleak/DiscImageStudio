@@ -1,3 +1,4 @@
+using DiscImageStudio.Localization;
 using System.Windows.Input;
 using Avalonia;
 using Avalonia.Controls;
@@ -12,7 +13,7 @@ public partial class PathField : UserControl
     public static readonly StyledProperty<string?> TextProperty =
         AvaloniaProperty.Register<PathField, string?>(nameof(Text), string.Empty, defaultBindingMode: BindingMode.TwoWay);
     public static readonly StyledProperty<string> ButtonLabelProperty =
-        AvaloniaProperty.Register<PathField, string>(nameof(ButtonLabel), "浏览");
+        AvaloniaProperty.Register<PathField, string>(nameof(ButtonLabel), L.T("浏览"));
     public static readonly StyledProperty<ICommand?> CommandProperty =
         AvaloniaProperty.Register<PathField, ICommand?>(nameof(Command));
     public static readonly StyledProperty<object?> CommandParameterProperty =

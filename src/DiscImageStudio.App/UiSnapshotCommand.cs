@@ -5,6 +5,7 @@ using Avalonia.Headless;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using DiscImageStudio.Core;
+using DiscImageStudio.Localization;
 using DiscImageStudio.Services;
 using DiscImageStudio.ViewModels;
 
@@ -57,6 +58,7 @@ internal static class UiSnapshotCommand
             UnifiedCommandRunner.FindOption(options, "theme"),
             settingsDialog,
             UnifiedCommandRunner.FindOption(options, "settings-view"),
+            UnifiedCommandRunner.FindOption(options, "language"),
             double.Parse(UnifiedCommandRunner.FindOption(options, "scale") ?? "1",
                 System.Globalization.CultureInfo.InvariantCulture));
         return Render(request);
@@ -80,10 +82,14 @@ internal static class UiSnapshotCommand
             _ => throw new ArgumentException("Snapshot theme must be dark, light or system."),
         };
 
+        if (request.Language is not (null or L.Chinese or L.TraditionalChinese or L.English or L.SystemLanguage))
+            throw new ArgumentException("Snapshot language must be zh-CN, zh-TW, en or system.");
+        // Snapshots default to Simplified Chinese so reference images stay stable.
+        L.Initialize(request.Language ?? L.Chinese);
         Program.BuildHeadlessApp().SetupWithoutStarting();
         App.ApplyTheme(theme);
 
-        if (request.SettingsDialog) return RenderSettingsDialog(request);
+        if (request.SettingsDialog) return RenderSettingsDialog(request, theme);
         if (request.ProjectDialog is not null) return RenderProjectDialog(request);
         if (request.AboutDialog) return Save(new AboutWindow(new AboutViewModel()), request);
         if (request.PresetDialog) return Save(new PresetSaveWindow(), request, sizeToContent: true);
@@ -158,7 +164,7 @@ internal static class UiSnapshotCommand
 
     /// <summary>Renders the settings window standalone. The store points at a throwaway file so
     /// a snapshot never reads or rewrites the workstation's real settings.</summary>
-    private static int RenderSettingsDialog(SnapshotRequest request)
+    private static int RenderSettingsDialog(SnapshotRequest request, AppTheme theme)
     {
         int category = request.SettingsView?.ToLowerInvariant() switch
         {
@@ -168,7 +174,8 @@ internal static class UiSnapshotCommand
         };
         AppSettingsStore store = new(Path.Combine(Path.GetTempPath(),
             "disc-settings-snapshot-" + Guid.NewGuid().ToString("N") + ".json"));
-        SettingsWindow window = new(new SettingsViewModel(new AppSettings(), store));
+        AppSettings settings = new() { Theme = theme, Language = request.Language ?? L.Chinese };
+        SettingsWindow window = new(new SettingsViewModel(settings, store));
         window.ShowCategoryForSnapshot(category);
         return Save(window, request);
     }
@@ -266,5 +273,6 @@ internal static class UiSnapshotCommand
         string? Theme,
         bool SettingsDialog,
         string? SettingsView,
+        string? Language,
         double Scale);
 }

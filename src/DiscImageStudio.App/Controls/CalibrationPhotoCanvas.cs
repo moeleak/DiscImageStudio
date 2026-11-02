@@ -1,3 +1,4 @@
+using DiscImageStudio.Localization;
 using System.Collections.Specialized;
 using System.Globalization;
 using System.Windows.Input;
@@ -52,7 +53,7 @@ public sealed class CalibrationPhotoCanvas : Control
     ];
 
     private string _viewDescription = "100%";
-    private string _selectionDescription = "滚轮缩放，右键平移；拖动控制点贴合边缘。";
+    private string _selectionDescription = L.T("滚轮缩放，右键平移；拖动控制点贴合边缘。");
     private double _zoom = 1;
     private Vector _pan;
     private bool _panning;
@@ -188,7 +189,7 @@ public sealed class CalibrationPhotoCanvas : Control
             _selectedBoundary = (point.Boundary, point.Index);
             _dragOriginal = new Point(point.X, point.Y);
             SelectionDescription = point.Boundary == CalibrationPhotoBoundaryKind.OuterEdge
-                ? "拖到盘片实体外缘；不要沿刻录区边界。" : "拖到实体内缘；不要沿透明塑料环。";
+                ? L.T("拖到盘片实体外缘；不要沿刻录区边界。") : L.T("拖到实体内缘；不要沿透明塑料环。");
         }
         else if (CanEditTrace)
         {
@@ -268,7 +269,7 @@ public sealed class CalibrationPhotoCanvas : Control
         if (TraceEditedCommand?.CanExecute(edit) != true) return;
         TraceEditedCommand.Execute(edit);
         _selectedTrace = null;
-        SelectionDescription = "已删除此点；点击照片继续描当前曲线。";
+        SelectionDescription = L.T("已删除此点；点击照片继续描当前曲线。");
         InvalidateVisual();
     }
 
@@ -305,15 +306,15 @@ public sealed class CalibrationPhotoCanvas : Control
                     Point screen = WorldToView(TraceDisplayPosition(point));
                     double radius = selected ? 6 : 4;
                     dc.DrawEllipse(pointBrush, new Pen(DiscTheme.Outline, 1.4), screen, radius, radius);
-                    if (selected) DrawText(dc, $"点 {point.Index + 1}", screen + new Vector(9, -16), pointBrush, 12);
+                    if (selected) DrawText(dc, L.F($"点 {point.Index + 1}"), screen + new Vector(9, -16), pointBrush, 12);
                 }
             }
         }
 
         if (ShowingTarget)
-            DrawCaption(dc, Image is null ? "标靶预览 · 导入照片后开始矫正" : "刻录图案预览 · 关闭预览后继续照片标定");
+            DrawCaption(dc, Image is null ? L.T("标靶预览 · 导入照片后开始矫正") : L.T("刻录图案预览 · 关闭预览后继续照片标定"));
         else if (IsRectificationPreview)
-            DrawCaption(dc, "矫正预览 · 确认后开始描线");
+            DrawCaption(dc, L.T("矫正预览 · 确认后开始描线"));
     }
 
     private static Point[] ToPoints(PlanePoint[] points) => Array.ConvertAll(points, point => new Point(point.X, point.Y));
@@ -424,8 +425,8 @@ public sealed class CalibrationPhotoCanvas : Control
     }
 
     private void UpdateTraceDescription() => SelectionDescription = _selectedTrace is { } point
-        ? $"已选曲线上的点 {point.Index + 1} · 直接拖动修正，Delete 删除"
-        : "点击照片上同一条可见曲线，由内向外连续描点。";
+        ? L.F($"已选曲线上的点 {point.Index + 1} · 直接拖动修正，Delete 删除")
+        : L.T("点击照片上同一条可见曲线，由内向外连续描点。");
 
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {
@@ -443,8 +444,8 @@ public sealed class CalibrationPhotoCanvas : Control
             _selectedBoundary = null;
             ResetView();
             SelectionDescription = IsPhotoStep
-                ? "滚轮缩放，右键平移；拖动控制点贴合边缘。"
-                : "滚轮缩放，右键平移；点击添加点，拖动已有点修正位置。";
+                ? L.T("滚轮缩放，右键平移；拖动控制点贴合边缘。")
+                : L.T("滚轮缩放，右键平移；点击添加点，拖动已有点修正位置。");
         }
 
         if (Array.IndexOf(RenderProperties, change.Property) >= 0) InvalidateVisual();

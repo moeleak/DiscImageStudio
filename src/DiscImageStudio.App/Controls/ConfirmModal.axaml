@@ -1,5 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="using:DiscImageStudio.Localization"
              xmlns:controls="using:DiscImageStudio.Controls"
              x:Class="DiscImageStudio.Controls.ConfirmModal"
              Focusable="False">
@@ -20,11 +21,11 @@
                            Foreground="{DynamicResource TextSecondaryBrush}" />
                 <Grid Margin="0,24,0,0" ColumnDefinitions="*,10,*,10,*">
                     <Button x:Name="CancelButton" Theme="{StaticResource SecondaryButton}" HorizontalAlignment="Stretch"
-                            Content="取消" Click="Cancel_Click" />
+                            Content="{loc:Text Xaml.Cancel}" Click="Cancel_Click" />
                     <Button x:Name="NeutralButton" Grid.Column="2" Theme="{StaticResource SecondaryButton}" HorizontalAlignment="Stretch"
-                            Content="不保存" IsVisible="False" Click="Neutral_Click" />
+                            Content="{loc:Text Xaml.DonTSave}" IsVisible="False" Click="Neutral_Click" />
                     <Button x:Name="ConfirmButton" Grid.Column="4" Theme="{StaticResource DangerButton}" HorizontalAlignment="Stretch"
-                            Content="确认刻录" Click="Confirm_Click" />
+                            Content="{loc:Text Xaml.ConfirmBurn}" Click="Confirm_Click" />
                 </Grid>
             </StackPanel>
         </Border>

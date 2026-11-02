@@ -1,3 +1,4 @@
+using DiscImageStudio.Localization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DiscImageStudio.Core;
@@ -68,7 +69,7 @@ public partial class ExportViewModel : ObservableObject
     public string FamilyLabel => _shell.CurrentProject?.FamilyLabel ?? "CD";
 
     /// <summary>Primary action label: the artifact differs per family (WAV track vs ISO).</summary>
-    public string GenerateButtonText => !IsCd || _state.HasCdFiles ? "生成镜像" : "生成音轨";
+    public string GenerateButtonText => !IsCd || _state.HasCdFiles ? L.T("生成镜像") : L.T("生成音轨");
 
     /// <summary>The source card's jump into the project dialog, where the generation geometry
     /// is edited; every other workspace shows the same affordance for the same reason.</summary>
@@ -84,7 +85,7 @@ public partial class ExportViewModel : ObservableObject
     public IAsyncRelayCommand GenerateCommand { get; }
 
     [ObservableProperty]
-    private string _sourceSummary = "请先在设计页导入图片。";
+    private string _sourceSummary = L.T("请先在设计页导入图片。");
 
     private void NotifyCommands()
     {
@@ -97,7 +98,7 @@ public partial class ExportViewModel : ObservableObject
     {
         if (IsBluRay)
         {
-            string? iso = await _shell.PickSaveAsync("ISO 镜像|*.iso|所有文件|*.*", ".iso", "bd-image.iso");
+            string? iso = await _shell.PickSaveAsync(L.T("ISO 镜像|*.iso|所有文件|*.*"), ".iso", "bd-image.iso");
             if (iso is not null)
             {
                 _state.BdOutputPath = iso;
@@ -105,7 +106,7 @@ public partial class ExportViewModel : ObservableObject
         }
         else if (IsDvd)
         {
-            string? iso = await _shell.PickSaveAsync("ISO 镜像|*.iso|所有文件|*.*", ".iso", "dvd-image.iso");
+            string? iso = await _shell.PickSaveAsync(L.T("ISO 镜像|*.iso|所有文件|*.*"), ".iso", "dvd-image.iso");
             if (iso is not null)
             {
                 _state.DvdOutputPath = iso;
@@ -113,7 +114,7 @@ public partial class ExportViewModel : ObservableObject
         }
         else if (_state.HasCdFiles)
         {
-            string? iso = await _shell.PickSaveAsync("ISO 镜像|*.iso|所有文件|*.*", ".iso", "cd-image.iso");
+            string? iso = await _shell.PickSaveAsync(L.T("ISO 镜像|*.iso|所有文件|*.*"), ".iso", "cd-image.iso");
             if (iso is not null)
             {
                 _state.CdOutputPath = iso;
@@ -121,7 +122,7 @@ public partial class ExportViewModel : ObservableObject
         }
         else
         {
-            string? wav = await _shell.PickSaveAsync("WAV 音轨（推荐）|*.wav|RAW 音轨（旧格式）|*.raw|所有文件|*.*", ".wav", "cd-track.wav");
+            string? wav = await _shell.PickSaveAsync(L.T("WAV 音轨（推荐）|*.wav|RAW 音轨（旧格式）|*.raw|所有文件|*.*"), ".wav", "cd-track.wav");
             if (wav is not null)
             {
                 _state.CdOutputPath = wav;
@@ -133,7 +134,7 @@ public partial class ExportViewModel : ObservableObject
     {
         if (IsCd)
         {
-            string? picked = await _shell.PickFolderAsync("选择要放入 CD 数据盘的文件夹");
+            string? picked = await _shell.PickFolderAsync(L.T("选择要放入 CD 数据盘的文件夹"));
             if (picked is not null)
             {
                 _state.CdDataDirectory = picked;
@@ -144,7 +145,7 @@ public partial class ExportViewModel : ObservableObject
 
         if (IsBluRay)
         {
-            string? picked = await _shell.PickFolderAsync("选择要放入蓝光盘的文件夹");
+            string? picked = await _shell.PickFolderAsync(L.T("选择要放入蓝光盘的文件夹"));
             if (picked is not null)
             {
                 _state.BdDataDirectory = picked;
@@ -153,7 +154,7 @@ public partial class ExportViewModel : ObservableObject
             return;
         }
 
-        string? dvdFolder = await _shell.PickFolderAsync("选择要放入 DVD 的文件夹");
+        string? dvdFolder = await _shell.PickFolderAsync(L.T("选择要放入 DVD 的文件夹"));
         if (dvdFolder is not null)
         {
             _state.DvdDataDirectory = dvdFolder;
@@ -164,14 +165,14 @@ public partial class ExportViewModel : ObservableObject
     {
         if (!_shell.IsProjectOpen)
         {
-            SourceSummary = "请先打开或新建一个工程。";
+            SourceSummary = L.T("请先打开或新建一个工程。");
             return;
         }
 
         int layerCount = _design.Layers.Count;
         SourceSummary = layerCount == 0
-            ? "请先在设计页导入图片。"
-            : $"设计页合成图源（{RingImageQuality.GenerationSize} px）";
+            ? L.T("请先在设计页导入图片。")
+            : L.F($"设计页合成图源（{RingImageQuality.GenerationSize} px）");
         OnPropertyChanged(nameof(HasLayers));
     }
 
@@ -204,7 +205,7 @@ public partial class ExportViewModel : ObservableObject
     private async Task GenerateCdAsync(string compositePath)
     {
         string output = RequirePath(_state.CdOutputPath,
-            _state.HasCdFiles ? "请选择 CD ISO 输出位置。" : "请选择 CD 音轨输出位置。");
+            _state.HasCdFiles ? L.T("请选择 CD ISO 输出位置。") : L.T("请选择 CD 音轨输出位置。"));
         List<string> arguments = ["cd-generate", "--input", compositePath, "--output", output];
         // The CD engine defaults (1200 mm/s, 0°, 57.5 mm) cover velocity, start angle and the
         // image outer radius; only the user-visible geometry is passed through.
@@ -237,7 +238,7 @@ public partial class ExportViewModel : ObservableObject
             ]);
         }
         await _shell.RunDiscJobAsync(
-            _state.HasCdFiles ? "正在生成 CD 数据盘 ISO…" : "正在生成 CD 音轨…",
+            _state.HasCdFiles ? L.T("正在生成 CD 数据盘 ISO…") : L.T("正在生成 CD 音轨…"),
             arguments.ToArray(),
             output);
         // The generated track is the live preview page's read-back input.
@@ -246,7 +247,7 @@ public partial class ExportViewModel : ObservableObject
 
     private async Task GenerateDvdAsync(string compositePath)
     {
-        string output = RequirePath(_state.DvdOutputPath, "请选择 DVD ISO 输出位置。");
+        string output = RequirePath(_state.DvdOutputPath, L.T("请选择 DVD ISO 输出位置。"));
         ToneProfile tone = _state.DvdTone;
         List<string> arguments =
         [
@@ -285,7 +286,7 @@ public partial class ExportViewModel : ObservableObject
         }
 
         await _shell.RunDiscJobAsync(
-            "正在生成 DVD ISO…",
+            L.T("正在生成 DVD ISO…"),
             arguments.ToArray(),
             output);
         // The generated ISO is the live preview page's read-back input.
@@ -294,7 +295,7 @@ public partial class ExportViewModel : ObservableObject
 
     private async Task GenerateBluRayAsync(string compositePath)
     {
-        string output = RequirePath(_state.BdOutputPath, "请选择蓝光 ISO 输出位置。");
+        string output = RequirePath(_state.BdOutputPath, L.T("请选择蓝光 ISO 输出位置。"));
         ToneProfile tone = _state.BluRayTone;
         List<string> arguments =
         [
@@ -321,7 +322,7 @@ public partial class ExportViewModel : ObservableObject
         }
 
         await _shell.RunDiscJobAsync(
-            "正在生成蓝光 ISO…",
+            L.T("正在生成蓝光 ISO…"),
             arguments.ToArray(),
             output);
         // The generated ISO and its sidecar are the live preview page's read-back input.

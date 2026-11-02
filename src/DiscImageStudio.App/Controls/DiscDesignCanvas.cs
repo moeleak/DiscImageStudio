@@ -1,3 +1,4 @@
+using DiscImageStudio.Localization;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using Avalonia;
@@ -316,7 +317,7 @@ public class DiscDesignCanvas : Control
 
     private void DrawEmptyHint(DrawingContext context, Point center)
     {
-        FormattedText text = DiscRenderCore.CreateText("点击左侧「导入图片」开始设计", 14, DiscTheme.Guide);
+        FormattedText text = DiscRenderCore.CreateText(L.T("点击左侧「导入图片」开始设计"), 14, DiscTheme.Guide);
         context.DrawText(text, new Point(center.X - text.Width / 2, center.Y - text.Height / 2));
     }
 

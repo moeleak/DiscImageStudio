@@ -1,3 +1,4 @@
+using DiscImageStudio.Localization;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
@@ -156,7 +157,7 @@ public partial class HomeViewModel : ObservableObject
         string nature = family switch
         {
             OpticalDiscFamily.Dvd => "DVD",
-            OpticalDiscFamily.BluRay => "蓝光",
+            OpticalDiscFamily.BluRay => L.T("蓝光"),
             _ => "CD",
         };
 
@@ -205,8 +206,8 @@ public partial class HomeViewModel : ObservableObject
         if (!File.Exists(entry.ProjectPath))
         {
             _shell.ShowToast(
-                "无法打开工程",
-                $"工程文件已移动或删除：\n{entry.ProjectPath}",
+                L.T("无法打开工程"),
+                L.F($"工程文件已移动或删除：\n{entry.ProjectPath}"),
                 ToastKind.Warning);
             return;
         }

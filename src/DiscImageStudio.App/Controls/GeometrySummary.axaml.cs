@@ -1,3 +1,4 @@
+using DiscImageStudio.Localization;
 using System.Windows.Input;
 using Avalonia;
 using Avalonia.Controls;
@@ -7,7 +8,7 @@ namespace DiscImageStudio.Controls;
 public partial class GeometrySummary : UserControl
 {
     public static readonly StyledProperty<string> TitleProperty =
-        AvaloniaProperty.Register<GeometrySummary, string>(nameof(Title), "盘片几何");
+        AvaloniaProperty.Register<GeometrySummary, string>(nameof(Title), L.T("盘片几何"));
     public static readonly StyledProperty<string> DetailsProperty =
         AvaloniaProperty.Register<GeometrySummary, string>(nameof(Details), string.Empty);
     public static readonly StyledProperty<string> NoteProperty =
@@ -17,7 +18,7 @@ public partial class GeometrySummary : UserControl
     public static readonly StyledProperty<object?> EditCommandParameterProperty =
         AvaloniaProperty.Register<GeometrySummary, object?>(nameof(EditCommandParameter));
     public static readonly StyledProperty<string> EditLabelProperty =
-        AvaloniaProperty.Register<GeometrySummary, string>(nameof(EditLabel), "编辑…");
+        AvaloniaProperty.Register<GeometrySummary, string>(nameof(EditLabel), L.T("编辑…"));
 
     public GeometrySummary()
     {

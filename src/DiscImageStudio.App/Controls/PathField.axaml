@@ -1,5 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="using:DiscImageStudio.Localization"
              x:Class="DiscImageStudio.Controls.PathField">
     <!-- One path-row recipe (label + field + browse). Compact=true switches the row to the
          inspector density. An empty value that means "use the default" shows the default as
@@ -8,7 +9,7 @@
         <TextBlock x:Name="LabelText" Theme="{StaticResource FieldLabel}" IsVisible="False" />
         <Grid ColumnDefinitions="*,Auto">
             <TextBox x:Name="PathTextBox" />
-            <Button x:Name="BrowseButton" Grid.Column="1" Content="浏览" Theme="{StaticResource BrowseButton}" />
+            <Button x:Name="BrowseButton" Grid.Column="1" Content="{loc:Text Xaml.Browse2}" Theme="{StaticResource BrowseButton}" />
         </Grid>
         <TextBlock x:Name="HintTextBlock" Theme="{StaticResource CompactHint}" Margin="0,6,0,0" IsVisible="False" />
     </StackPanel>

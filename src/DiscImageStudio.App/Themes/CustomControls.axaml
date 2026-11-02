@@ -1,5 +1,6 @@
 <ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:loc="using:DiscImageStudio.Localization"
                     xmlns:controls="using:DiscImageStudio.Controls">
 
     <!-- MonitorCard: banded header / body / optional status footer. -->
@@ -113,7 +114,7 @@
                                            Text="{TemplateBinding StepTitle}" Theme="{StaticResource CardTitle}" />
                                 <Border Grid.Column="2" CornerRadius="{StaticResource RadiusChip}" Padding="6,2"
                                         Background="{DynamicResource Surface3Brush}" VerticalAlignment="Center" Margin="10,0,0,0">
-                                    <TextBlock Name="StateChipText" Theme="{StaticResource MicroText}" Text="待开始" />
+                                    <TextBlock Name="StateChipText" Theme="{StaticResource MicroText}" Text="{loc:Text Xaml.NotStarted}" />
                                 </Border>
                                 <controls:LucideIcon Name="HeaderChevron" Grid.Column="3" Kind="ChevronDown" Width="16" Height="16"
                                                      Margin="10,0,0,0" VerticalAlignment="Center"
@@ -141,7 +142,7 @@
             <Setter Property="Foreground" Value="White" />
         </Style>
         <Style Selector="^:active /template/ TextBlock#StateChipText">
-            <Setter Property="Text" Value="进行中" />
+            <Setter Property="Text" Value="{loc:Text Xaml.InProgress}" />
             <Setter Property="Foreground" Value="{DynamicResource PrimaryHoverBrush}" />
         </Style>
         <Style Selector="^:done /template/ Border#StepDot">
@@ -154,7 +155,7 @@
             <Setter Property="IsVisible" Value="True" />
         </Style>
         <Style Selector="^:done /template/ TextBlock#StateChipText">
-            <Setter Property="Text" Value="已完成" />
+            <Setter Property="Text" Value="{loc:Text Xaml.Complete}" />
             <Setter Property="Foreground" Value="{DynamicResource SuccessBrush}" />
         </Style>
     </ControlTheme>

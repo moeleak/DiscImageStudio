@@ -1,8 +1,9 @@
 <Window x:Class="DiscImageStudio.PresetSaveWindow"
         xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="using:DiscImageStudio.Localization"
         xmlns:controls="using:DiscImageStudio.Controls"
-        Title="保存为预设"
+        Title="{loc:Text Xaml.SaveAsPreset}"
         Width="480" SizeToContent="Height" MaxWidth="640"
         WindowStartupLocation="CenterOwner"
         CanResize="False"
@@ -16,7 +17,7 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <controls:TitleBar Grid.Row="0" ProjectTitle="保存为预设" />
+        <controls:TitleBar Grid.Row="0" ProjectTitle="{loc:Text Xaml.SaveAsPreset}" />
 
         <Grid Grid.Row="1" Margin="28,20,28,24">
             <Grid.RowDefinitions>
@@ -26,7 +27,7 @@
 
             <Border Grid.Row="0" Theme="{StaticResource CardStyle}" Padding="16">
                 <StackPanel>
-                    <TextBlock Theme="{StaticResource FieldLabel}" Text="预设名称" />
+                    <TextBlock Theme="{StaticResource FieldLabel}" Text="{loc:Text Xaml.PresetName}" />
                     <TextBox x:Name="NameBox" MaxLength="80" />
                 </StackPanel>
             </Border>
@@ -37,10 +38,10 @@
                     <ColumnDefinition Width="10" />
                     <ColumnDefinition Width="Auto" SharedSizeGroup="DialogAction" />
                 </Grid.ColumnDefinitions>
-                <Button Grid.Column="0" Theme="{StaticResource SecondaryButton}" Content="取消"
+                <Button Grid.Column="0" Theme="{StaticResource SecondaryButton}" Content="{loc:Text Xaml.Cancel}"
                         Click="Cancel_Click" />
                 <Button Grid.Column="2" x:Name="SaveButton" Theme="{StaticResource PrimaryButton}"
-                        Content="保存" Click="Save_Click" IsDefault="True" />
+                        Content="{loc:Text Xaml.Save}" Click="Save_Click" IsDefault="True" />
             </Grid>
         </Grid>
     </Grid>

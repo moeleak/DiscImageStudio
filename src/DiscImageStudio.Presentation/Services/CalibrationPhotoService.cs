@@ -1,3 +1,4 @@
+using DiscImageStudio.Localization;
 using System.IO;
 using DiscImageStudio.Core.Calibration;
 using DiscImageStudio.Imaging;
@@ -13,13 +14,14 @@ public static class CalibrationPhotoService
     public static Bgra32Image Load(string path, int maxDimension = 2000, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        if (string.IsNullOrWhiteSpace(path)) throw new ArgumentException("请选择一张盘片照片。", nameof(path));
-        if (maxDimension is < 64 or > 4096) throw new ArgumentOutOfRangeException(nameof(maxDimension), "照片尺寸上限应为 64–4096 像素。");
+        if (string.IsNullOrWhiteSpace(path)) throw new ArgumentException(L.T("请选择一张盘片照片。"), nameof(path));
+        if (maxDimension is < 64 or > 4096) throw new ArgumentOutOfRangeException(nameof(maxDimension), L.T("照片尺寸上限应为 64–4096 像素。"));
         using FileStream stream = new(path, FileMode.Open, FileAccess.Read, FileShare.Read);
-        if (stream.Length > 256L * 1024 * 1024) throw new ArgumentException("照片文件过大，请使用小于 256 MB 的图片。");
+        if (stream.Length > 256L * 1024 * 1024) throw new ArgumentException(L.T("照片文件过大，请使用小于 256 MB 的图片。"));
         Bgra32Image decoded;
         try { decoded = ImageCodec.Decode(stream); }
-        catch (NotSupportedException) { throw new ArgumentException("照片没有可读取的图像。"); }
+        catch (NotSupportedException) { throw new ArgumentException(L.T("照片没有可读取的图像。")); }
+        if (decoded.Width <= 0 || decoded.Height <= 0) throw new ArgumentException(L.T("照片尺寸无效。"));
         cancellationToken.ThrowIfCancellationRequested();
         // Longest side capped at maxDimension, aspect preserved; smaller photos keep their size.
         Bgra32Image image = ImageCodec.Fit(decoded, maxDimension, maxDimension);
@@ -32,8 +34,8 @@ public static class CalibrationPhotoService
     {
         ArgumentNullException.ThrowIfNull(image);
         cancellationToken.ThrowIfCancellationRequested();
-        if (count is < 5 or > 64) throw new ArgumentOutOfRangeException(nameof(count), "每条初始轮廓应有 5–64 个点。");
-        if (image.Width < 16 || image.Height < 16) throw new ArgumentException("照片太小，无法输入轮廓。");
+        if (count is < 5 or > 64) throw new ArgumentOutOfRangeException(nameof(count), L.T("每条初始轮廓应有 5–64 个点。"));
+        if (image.Width < 16 || image.Height < 16) throw new ArgumentException(L.T("照片太小，无法输入轮廓。"));
         double cx = (image.Width - 1) / 2.0, cy = (image.Height - 1) / 2.0;
         double rx = image.Width * 0.43, ry = image.Height * 0.43;
         CalibrationPoint[] Make(double ratio) => Enumerable.Range(0, count).Select(index =>
@@ -52,11 +54,11 @@ public static class CalibrationPhotoService
         ArgumentNullException.ThrowIfNull(transform);
         cancellationToken.ThrowIfCancellationRequested();
         if (!double.IsFinite(canvasOuterRadiusMm) || canvasOuterRadiusMm is <= 0 or > 150)
-            throw new ArgumentOutOfRangeException(nameof(canvasOuterRadiusMm), "矫正画布半径无效。");
-        if (pixelSize is < 32 or > 4096) throw new ArgumentOutOfRangeException(nameof(pixelSize), "矫正图片尺寸应为 32–4096 像素。");
+            throw new ArgumentOutOfRangeException(nameof(canvasOuterRadiusMm), L.T("矫正画布半径无效。"));
+        if (pixelSize is < 32 or > 4096) throw new ArgumentOutOfRangeException(nameof(pixelSize), L.T("矫正图片尺寸应为 32–4096 像素。"));
         if (image.Width is < 1 or > 4096 || image.Height is < 1 or > 4096)
-            throw new ArgumentException("请先按照片尺寸上限载入图片，再进行矫正。");
-        if (!transform.IsValidForDisc(canvasOuterRadiusMm)) throw new ArgumentException("照片变换在当前画布内退化，请重新矫正轮廓或缩小画布。");
+            throw new ArgumentException(L.T("请先按照片尺寸上限载入图片，再进行矫正。"));
+        if (!transform.IsValidForDisc(canvasOuterRadiusMm)) throw new ArgumentException(L.T("照片变换在当前画布内退化，请重新矫正轮廓或缩小画布。"));
         int width = image.Width, height = image.Height;
         int sourceStride = checked(width * 4), stride = checked(pixelSize * 4);
         byte[] source = image.Pixels;

@@ -1,3 +1,4 @@
+using DiscImageStudio.Localization;
 using System.ComponentModel;
 using Avalonia;
 using Avalonia.Animation;
@@ -199,7 +200,7 @@ public partial class MainWindow : Window
     {
         if (!_shell.IsProjectOpen || !SidebarBorder.IsVisible || !ProjectHeaderButton.IsVisible)
         {
-            _shell.ShowToast("标定参数已应用", "本工程的参数已更新。", ToastKind.Success);
+            _shell.ShowToast(L.T("标定参数已应用"), L.T("本工程的参数已更新。"), ToastKind.Success);
             return;
         }
 
@@ -263,16 +264,17 @@ public partial class MainWindow : Window
         Setters = { new Setter(OpacityProperty, opacity) },
     };
 
+    private void TitleBar_SettingsRequested(object? sender, RoutedEventArgs e) => _ = OpenSettingsDialogAsync();
+
+    // About stays in the shared application menu; settings has a direct title-bar button.
     private void TitleBar_AppMenuRequested(object? sender, RoutedEventArgs e)
     {
         if (sender is not TitleBar titleBar) return;
-        MenuItem settings = new() { Header = "设置…", InputGesture = new KeyGesture(Key.OemComma, CommandModifier) };
-        settings.Click += (_, _) => _ = OpenSettingsDialogAsync();
-        MenuItem about = new() { Header = "关于…" };
+        MenuItem about = new() { Header = L.T("Xaml.About2") };
         about.Click += (_, _) => _ = new AboutWindow(_shell.About).ShowDialog(this);
         ContextMenu menu = new()
         {
-            ItemsSource = new[] { settings, about },
+            ItemsSource = new[] { about },
             Placement = PlacementMode.BottomEdgeAlignedRight,
         };
         menu.Open(titleBar.AppMenuAnchor);
@@ -280,6 +282,8 @@ public partial class MainWindow : Window
 
     private async Task OpenSettingsDialogAsync()
     {
+        if (BurnConfirmModal.IsOpen) return;
+
         SettingsViewModel viewModel = new(_settings, _settingsStore) { IsBusyProvider = () => _shell.IsBusy };
         SettingsWindow window = new(viewModel);
         PropertyChangedEventHandler busyHandler = (_, args) =>
@@ -303,13 +307,19 @@ public partial class MainWindow : Window
 
     private void ApplySettings(AppSettings settings)
     {
+        bool languageChanged = _settings.Language != settings.Language;
         _settings = settings;
         App.ApplyTheme(settings.Theme);
+        if (languageChanged)
+        {
+            _shell.ShowToast(L.T("语言设置已保存"), L.T("重启应用后生效。"), ToastKind.Info);
+        }
+
         string cacheDirectory = TempFiles.TryConfigureCacheDirectory(settings.CacheDirectory);
         if (settings.CacheDirectory.Length > 0
             && !string.Equals(cacheDirectory, settings.CacheDirectory, PlatformPaths.PathComparison))
         {
-            _shell.ShowToast("缓存位置不可用", "已改用系统临时目录。", ToastKind.Warning);
+            _shell.ShowToast(L.T("缓存位置不可用"), L.T("已改用系统临时目录。"), ToastKind.Warning);
         }
     }
 
@@ -436,7 +446,7 @@ public partial class MainWindow : Window
         BackHomeButton.HorizontalAlignment = collapsed ? Avalonia.Layout.HorizontalAlignment.Center : Avalonia.Layout.HorizontalAlignment.Left;
         CollapseLeftIcon.IsVisible = !collapsed;
         CollapseRightIcon.IsVisible = collapsed;
-        ToolTip.SetTip(SidebarCollapseToggle, collapsed ? "展开侧边栏" : "收起侧边栏");
+        ToolTip.SetTip(SidebarCollapseToggle, collapsed ? L.T("展开侧边栏") : L.T("收起侧边栏"));
     }
 
     // ---- Snapshot hooks (ui-snapshot CLI) ----
@@ -505,11 +515,11 @@ public partial class MainWindow : Window
             : kind == OpticalBurnMediaKind.BluRayData ? 12219392L * 2048 : 2295104L * 2048;
         _shell.SetBusy(true);
         _shell.BeginBurnDockJob(kind, total);
-        _shell.ReportBurnProgress(new(OpticalBurnStages.Buffer, "正在准备防断流缓冲区…", 0, total));
+        _shell.ReportBurnProgress(new(OpticalBurnStages.Buffer, L.T("正在准备防断流缓冲区…"), 0, total));
         if (phase != "buffer")
-            _shell.ReportBurnProgress(new(OpticalBurnStages.Write, "刻录机开始写入。", total / 3, total, 8.25 * 1024 * 1024));
+            _shell.ReportBurnProgress(new(OpticalBurnStages.Write, L.T("刻录机开始写入。"), total / 3, total, 8.25 * 1024 * 1024));
         if (phase == "finalize")
-            _shell.ReportBurnProgress(new(OpticalBurnStages.Finalize, "正在刷新缓存并关闭刻录会话…", total / 3, total));
+            _shell.ReportBurnProgress(new(OpticalBurnStages.Finalize, L.T("正在刷新缓存并关闭刻录会话…"), total / 3, total));
     }
 
     internal void PlayProjectUpdateForSnapshot() => PlayProjectUpdateCelebration();

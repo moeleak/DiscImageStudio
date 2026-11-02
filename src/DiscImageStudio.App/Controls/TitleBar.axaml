@@ -1,5 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="using:DiscImageStudio.Localization"
+             xmlns:controls="using:DiscImageStudio.Controls"
              x:Class="DiscImageStudio.Controls.TitleBar">
     <!-- App title row. On Windows it is the whole caption (drag area + window buttons); on
          macOS the native traffic lights sit in its reserved left inset; on Linux the window
@@ -36,30 +38,45 @@
             <Setter Property="Stretch" Value="None" />
         </Style>
     </UserControl.Styles>
-    <Grid x:Name="Bar" Height="32" Background="{DynamicResource BackgroundBrush}">
-        <StackPanel x:Name="TitleContent" Orientation="Horizontal" Margin="12,0" VerticalAlignment="Center"
-                    IsHitTestVisible="False">
-            <Image x:Name="AppIcon" Source="{StaticResource AppIconSource}" Width="16" Height="16" Margin="0,0,8,0" />
-            <TextBlock x:Name="AppTitleText" Text="Disc Image Studio" FontSize="12"
+    <Grid x:Name="Bar" Height="32" Background="{DynamicResource BackgroundBrush}" ColumnDefinitions="*,Auto">
+        <!-- Pointer presses on the title bubble to Bar, which starts the window drag; the
+             project title stays hit-testable for its tooltip when it is trimmed. -->
+        <Grid x:Name="TitleContent" Margin="12,0" VerticalAlignment="Center" ColumnDefinitions="Auto,Auto,*">
+            <Image x:Name="AppIcon" Grid.Column="0" Source="{StaticResource AppIconSource}" Width="16" Height="16" Margin="0,0,8,0" />
+            <TextBlock x:Name="AppTitleText" Grid.Column="1" Text="Disc Image Studio" FontSize="12"
                        Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
-            <TextBlock x:Name="ProjectTitleText" FontSize="12" Margin="8,0,0,0" IsVisible="False"
+            <TextBlock x:Name="ProjectTitleText" Grid.Column="2" FontSize="12" Margin="8,0,0,0" IsVisible="False"
+                       TextTrimming="CharacterEllipsis"
+                       ToolTip.Tip="{Binding Text, RelativeSource={RelativeSource Self}}"
                        Foreground="{DynamicResource TextMutedBrush}" VerticalAlignment="Center" />
-        </StackPanel>
-        <StackPanel x:Name="WindowButtons" Orientation="Horizontal" HorizontalAlignment="Right">
-            <Button x:Name="AppMenuButton" Classes="Caption" Click="AppMenu_Click" ToolTip.Tip="应用菜单" IsVisible="False">
+        </Grid>
+        <StackPanel x:Name="WindowButtons" Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
+            <!-- Direct, labeled settings action; only the main window opts in. -->
+            <Button x:Name="SettingsButton" Theme="{StaticResource SecondaryButton}" Height="26" MinHeight="26"
+                    MinWidth="76" Padding="12,0" Margin="8,3,6,3" FontSize="12" Click="Settings_Click"
+                    IsVisible="False" VerticalAlignment="Center"
+                    ToolTip.Tip="{loc:Text Xaml.OpenSettingsShortcut}"
+                    AutomationProperties.Name="{loc:Text Xaml.SettingsButton}">
+                <StackPanel Orientation="Horizontal">
+                    <controls:LucideIcon Kind="Settings" Width="14" Height="14"
+                                         Foreground="{DynamicResource PrimaryBrush}" VerticalAlignment="Center" />
+                    <TextBlock Text="{loc:Text Xaml.SettingsButton}" Margin="6,0,0,0" VerticalAlignment="Center" />
+                </StackPanel>
+            </Button>
+            <Button x:Name="AppMenuButton" Classes="Caption" Click="AppMenu_Click" ToolTip.Tip="{loc:Text Xaml.AppMenu}" IsVisible="False">
                 <Path Data="{StaticResource WinEllipsisIcon}" Fill="{DynamicResource TextPrimaryBrush}"
                       HorizontalAlignment="Center" VerticalAlignment="Center" />
             </Button>
-            <Button x:Name="MinimizeButton" Classes="Caption" Click="Minimize_Click" ToolTip.Tip="最小化">
+            <Button x:Name="MinimizeButton" Classes="Caption" Click="Minimize_Click" ToolTip.Tip="{loc:Text Xaml.Minimize}">
                 <Path Classes="Glyph" Data="{StaticResource WinMinimizeIcon}" Width="10" Height="1" />
             </Button>
-            <Button x:Name="MaximizeButton" Classes="Caption" Click="Maximize_Click" ToolTip.Tip="最大化">
+            <Button x:Name="MaximizeButton" Classes="Caption" Click="Maximize_Click" ToolTip.Tip="{loc:Text Xaml.Maximize}">
                 <Panel Width="10" Height="10">
                     <Path x:Name="MaximizeGlyph" Classes="Glyph" Data="{StaticResource WinMaximizeIcon}" />
                     <Path x:Name="RestoreGlyph" Classes="Glyph" Data="{StaticResource WinRestoreIcon}" IsVisible="False" />
                 </Panel>
             </Button>
-            <Button x:Name="CloseButton" Classes="Caption Close" Click="Close_Click" ToolTip.Tip="关闭">
+            <Button x:Name="CloseButton" Classes="Caption Close" Click="Close_Click" ToolTip.Tip="{loc:Text Xaml.Close}">
                 <Path Classes="Glyph" Data="{StaticResource WinCloseIcon}" Width="10" Height="10" />
             </Button>
         </StackPanel>

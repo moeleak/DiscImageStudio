@@ -1,6 +1,8 @@
 using System.Runtime.InteropServices;
 using Avalonia;
 using Avalonia.Headless;
+using DiscImageStudio.Localization;
+using DiscImageStudio.Services;
 
 namespace DiscImageStudio;
 
@@ -11,6 +13,12 @@ internal static class Program
     {
         if (arguments.Length == 0)
         {
+            // Language is fixed before any resource dictionary, window or view model exists:
+            // themes and templates resolve {loc:Text} once, at load time.
+            AppSettingsStore store = new();
+            AppSettings settings = store.Load();
+            L.Initialize(settings.Language);
+            App.StartupSettings = (settings, store);
             return BuildAvaloniaApp().StartWithClassicDesktopLifetime(arguments);
         }
 

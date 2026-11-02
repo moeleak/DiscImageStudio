@@ -1,6 +1,7 @@
 <Window x:Class="DiscImageStudio.MainWindow"
         xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="using:DiscImageStudio.Localization"
         xmlns:controls="using:DiscImageStudio.Controls"
         xmlns:vm="using:DiscImageStudio.ViewModels"
         x:DataType="vm:ShellViewModel"
@@ -19,6 +20,7 @@
         </Grid.RowDefinitions>
 
         <controls:TitleBar Grid.Row="0" ProjectTitle="{Binding ProjectTitleDisplay}"
+                           ShowSettingsButton="True" SettingsRequested="TitleBar_SettingsRequested"
                            ShowAppMenu="True" AppMenuRequested="TitleBar_AppMenuRequested" />
 
         <Grid Grid.Row="1">
@@ -48,7 +50,7 @@
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
                             <Button x:Name="BackHomeButton" Theme="{StaticResource GhostButton}"
-                                    Width="32" Height="32" Padding="0" Focusable="False" ToolTip.Tip="返回主页"
+                                    Width="32" Height="32" Padding="0" Focusable="False" ToolTip.Tip="{loc:Text Xaml.BackToHome}"
                                     Command="{Binding BackHomeCommand}">
                                 <controls:LucideIcon Kind="ChevronLeft" Width="17" Height="17"
                                                           Foreground="{DynamicResource TextSecondaryBrush}" />
@@ -56,7 +58,7 @@
                             <Grid x:Name="ProjectHeaderHost" Grid.Column="1" Margin="8,0,0,0">
                                 <Button x:Name="ProjectHeaderButton" Theme="{StaticResource TileButton}"
                                         Padding="6,2" Focusable="False"
-                                        ToolTip.Tip="工程设置"
+                                        ToolTip.Tip="{loc:Text Xaml.ProjectSettings}"
                                         Click="EditProject_Click">
                                     <StackPanel>
                                         <TextBlock x:Name="ProjectNameText" FontSize="14" FontWeight="Bold"
@@ -68,7 +70,7 @@
                                                 <TextBlock x:Name="ProjectFamilyText"
                                                            Theme="{StaticResource BadgeText}" />
                                             </Border>
-                                            <TextBlock x:Name="ProjectDirtyText" Text="未保存"
+                                            <TextBlock x:Name="ProjectDirtyText" Text="{loc:Text Xaml.Unsaved}"
                                                        Theme="{StaticResource MicroText}"
                                                        Foreground="{DynamicResource WarningBrush}"
                                                        Margin="6,0,0,0" IsVisible="False" />
@@ -104,7 +106,7 @@
                                         <controls:LucideIcon Kind="Check" Width="10" Height="10"
                                                                   VerticalAlignment="Center"
                                                                   Foreground="{DynamicResource SuccessBrush}" />
-                                        <TextBlock Text="参数已更新" Theme="{StaticResource BadgeText}"
+                                        <TextBlock Text="{loc:Text Xaml.ParametersUpdated}" Theme="{StaticResource BadgeText}"
                                                    Foreground="{DynamicResource SuccessBrush}"
                                                    VerticalAlignment="Center" Margin="4,0,0,0" />
                                     </StackPanel>
@@ -121,21 +123,21 @@
                         </Grid>
 
                         <!-- Icon-only rows keep the collapsed 60px bar a flat rail. -->
-                        <controls:SideNavItem x:Name="NavDesign" LabelText="设计"
+                        <controls:SideNavItem x:Name="NavDesign" LabelText="{loc:Text Xaml.Design}"
                                               IconKind="Palette" />
-                        <controls:SideNavItem x:Name="NavPreview" LabelText="预览"
+                        <controls:SideNavItem x:Name="NavPreview" LabelText="{loc:Text Xaml.Preview}"
                                               IconKind="Eye" />
-                        <controls:SideNavItem x:Name="NavExport" LabelText="导出"
+                        <controls:SideNavItem x:Name="NavExport" LabelText="{loc:Text Xaml.Export}"
                                               IconKind="FileDown" />
-                        <controls:SideNavItem x:Name="NavBurn" LabelText="刻录"
+                        <controls:SideNavItem x:Name="NavBurn" LabelText="{loc:Text Xaml.Burn}"
                                               IconKind="Flame" />
-                        <controls:SideNavItem x:Name="NavCalibration" LabelText="标定"
+                        <controls:SideNavItem x:Name="NavCalibration" LabelText="{loc:Text Xaml.Calibration}"
                                               IconKind="Crosshair" />
                     </StackPanel>
 
                     <Button x:Name="SidebarCollapseToggle" Grid.Row="1" Height="40" Margin="0,8,0,16"
                             Theme="{StaticResource GhostButton}" Padding="0" Focusable="False"
-                            ToolTip.Tip="收起侧边栏" Click="SidebarCollapseToggle_Click">
+                            ToolTip.Tip="{loc:Text Xaml.CollapseSidebar}" Click="SidebarCollapseToggle_Click">
                         <Grid>
                             <controls:LucideIcon x:Name="CollapseLeftIcon" Kind="ChevronLeft"
                                                       Width="20" Height="20" HorizontalAlignment="Left"

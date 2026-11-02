@@ -1,3 +1,4 @@
+using DiscImageStudio.Localization;
 namespace DiscImageStudio.Hosting;
 
 /// <summary>The UI thread of whichever desktop framework hosts the view models.</summary>
@@ -28,7 +29,7 @@ public interface IUiTimer
 /// <summary>A file-type filter: <paramref name="Patterns"/> are glob patterns such as <c>*.png</c>.</summary>
 public sealed record FileFilter(string Name, IReadOnlyList<string> Patterns)
 {
-    public static FileFilter All { get; } = new("所有文件", ["*.*"]);
+    public static FileFilter All { get; } = new(L.T("所有文件"), ["*.*"]);
 
     /// <summary>Parses the legacy WPF filter syntax <c>"Name|*.a;*.b|Name2|*.c"</c>.</summary>
     public static IReadOnlyList<FileFilter> Parse(string filter)

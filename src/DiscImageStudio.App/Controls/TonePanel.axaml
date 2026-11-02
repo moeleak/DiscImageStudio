@@ -1,5 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="using:DiscImageStudio.Localization"
              xmlns:controls="using:DiscImageStudio.Controls"
              xmlns:vm="using:DiscImageStudio.ViewModels"
              xmlns:conv="using:DiscImageStudio.Hosting"
@@ -8,7 +9,7 @@
     <!-- Tone module. Narrow form: the medallion preview fills the rail and the controls sit
          below. Wide form (≥ 520 px): a larger disc on the left, controls on the right. -->
     <Grid x:Name="ToneLayout" RowDefinitions="Auto,*,Auto" ColumnDefinitions="*,0,0">
-        <TextBlock x:Name="ModuleTitle" Grid.ColumnSpan="3" Text="影调" Theme="{StaticResource PanelTitle}" Margin="0,0,0,12" />
+        <TextBlock x:Name="ModuleTitle" Grid.ColumnSpan="3" Text="{loc:Text Xaml.Tone}" Theme="{StaticResource PanelTitle}" Margin="0,0,0,12" />
         <Border Grid.Row="1" Background="{DynamicResource Surface2Brush}" BorderBrush="{DynamicResource DividerBrush}"
                 BorderThickness="1" CornerRadius="{StaticResource RadiusPanel}" Padding="10">
             <!-- The square projection is drawn through an ellipse brush (a medallion); the crop
@@ -21,41 +22,41 @@
                     </Ellipse.Fill>
                 </Ellipse>
                 <Ellipse Fill="{DynamicResource Surface1Brush}" IsVisible="{Binding !HasTonePreview}" />
-                <TextBlock Text="暂无预览" Theme="{StaticResource MicroText}" HorizontalAlignment="Center"
+                <TextBlock Text="{loc:Text Xaml.NoPreview}" Theme="{StaticResource MicroText}" HorizontalAlignment="Center"
                            VerticalAlignment="Center" IsVisible="{Binding !HasTonePreview}" />
                 <Ellipse Stroke="{DynamicResource DividerBrush}" StrokeThickness="1" Margin="0.6" IsHitTestVisible="False" />
             </Grid>
         </Border>
         <StackPanel x:Name="ToneControls" Grid.Row="2" Margin="0,14,0,0">
             <Grid>
-                <TextBlock Theme="{StaticResource FieldLabel}" Margin="0" Text="抖动强度" />
+                <TextBlock Theme="{StaticResource FieldLabel}" Margin="0" Text="{loc:Text Xaml.Dithering}" />
                 <TextBlock Theme="{StaticResource RowText}" HorizontalAlignment="Right" Text="{Binding State.ToneDitherText}" />
             </Grid>
             <Slider Theme="{StaticResource ToneSlider}" Minimum="0" Maximum="1" Value="{Binding State.ToneDitherStrength, Mode=TwoWay}" />
             <Grid Margin="0,12,0,0">
-                <TextBlock Theme="{StaticResource FieldLabel}" Margin="0" Text="亮度" />
+                <TextBlock Theme="{StaticResource FieldLabel}" Margin="0" Text="{loc:Text Xaml.Brightness}" />
                 <TextBlock Theme="{StaticResource RowText}" HorizontalAlignment="Right" Text="{Binding State.ToneBrightnessText}" />
             </Grid>
             <Slider Theme="{StaticResource ToneBipolarSlider}" Minimum="-64" Maximum="64" Value="{Binding State.ToneBrightness, Mode=TwoWay}" />
             <controls:VisibilityGate IsOpen="{Binding IsCd}" Margin="0,12,0,0">
                 <StackPanel>
-                    <TextBlock Theme="{StaticResource FieldLabel}" Margin="0" Text="灰阶档位" />
-                    <controls:SegmentedControl LabelA="2 级" LabelB="4 级" HorizontalAlignment="Stretch"
+                    <TextBlock Theme="{StaticResource FieldLabel}" Margin="0" Text="{loc:Text Xaml.GrayLevels}" />
+                    <controls:SegmentedControl LabelA="{loc:Text Xaml.2Levels}" LabelB="{loc:Text Xaml.4Levels}" HorizontalAlignment="Stretch"
                                                IsSecondSelected="{Binding State.IsFourLevelSelected}" />
-                    <TextBlock Theme="{StaticResource CompactHint}" Margin="0,4,0,0" Text="4 级即四种颜色，可呈现出更好的图案细节。" />
+                    <TextBlock Theme="{StaticResource CompactHint}" Margin="0,4,0,0" Text="{loc:Text Xaml.FourLevelsUseFourTonesToRevealFinerDetails}" />
                 </StackPanel>
             </controls:VisibilityGate>
-            <CheckBox Margin="0,12,0,0" Content="sRGB 线性化（伽马校准）" IsChecked="{Binding State.ToneSrgbLinearization, Mode=TwoWay}" />
-            <TextBlock Theme="{StaticResource CompactHint}" Margin="0,4,0,0" Text="可能使盘面上的图案更明显。" />
+            <CheckBox Margin="0,12,0,0" Content="{loc:Text Xaml.SRGBLinearizationGamma}" IsChecked="{Binding State.ToneSrgbLinearization, Mode=TwoWay}" />
+            <TextBlock Theme="{StaticResource CompactHint}" Margin="0,4,0,0" Text="{loc:Text Xaml.MayImproveTheVisibilityOfTheDiscArtwork}" />
             <controls:VisibilityGate IsOpen="{Binding IsBluRay}" Margin="0,12,0,0">
                 <StackPanel>
-                    <CheckBox Content="反转 3T / 6T 映射" IsChecked="{Binding State.BdInvertMapping, Mode=TwoWay}" />
-                    <TextBlock Theme="{StaticResource CompactHint}" Margin="0,4,0,0" Text="交换暗部与亮部。实盘明暗仍以标定结果为准。" />
+                    <CheckBox Content="{loc:Text Xaml.Invert3T6TMapping}" IsChecked="{Binding State.BdInvertMapping, Mode=TwoWay}" />
+                    <TextBlock Theme="{StaticResource CompactHint}" Margin="0,4,0,0" Text="{loc:Text Xaml.SwapDarkAndLightRegionsActualDiscContrastDepends}" />
                 </StackPanel>
             </controls:VisibilityGate>
             <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
-                <Button Theme="{StaticResource CompactButton}" Content="恢复默认" Command="{Binding ResetToneCommand}" />
-                <Button Theme="{StaticResource CompactButton}" Content="刷新预览" Command="{Binding RefreshTonePreviewCommand}" Margin="8,0,0,0" />
+                <Button Theme="{StaticResource CompactButton}" Content="{loc:Text Xaml.ResetDefaults}" Command="{Binding ResetToneCommand}" />
+                <Button Theme="{StaticResource CompactButton}" Content="{loc:Text Xaml.RefreshPreview}" Command="{Binding RefreshTonePreviewCommand}" Margin="8,0,0,0" />
             </StackPanel>
         </StackPanel>
     </Grid>

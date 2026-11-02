@@ -113,6 +113,7 @@ CalibrationBurnSourceTests.Run();
 CalibrationOutputPublisherTests.Run();
 CalibrationPhotoViewModelTests.Run();
 AppSettingsTests.Run();
+LocalizationTests.Run();
 ThemePaletteTests.Run();
 TempFilesCacheTests.Run();
 

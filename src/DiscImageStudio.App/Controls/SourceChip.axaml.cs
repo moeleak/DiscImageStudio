@@ -1,3 +1,4 @@
+using DiscImageStudio.Localization;
 using Avalonia;
 using Avalonia.Controls;
 
@@ -6,7 +7,7 @@ namespace DiscImageStudio.Controls;
 public partial class SourceChip : UserControl
 {
     public static readonly StyledProperty<string> TextProperty =
-        AvaloniaProperty.Register<SourceChip, string>(nameof(Text), "来自设计页合成图");
+        AvaloniaProperty.Register<SourceChip, string>(nameof(Text), L.T("来自设计页合成图"));
     public static readonly StyledProperty<object?> ActionsProperty =
         AvaloniaProperty.Register<SourceChip, object?>(nameof(Actions));
 

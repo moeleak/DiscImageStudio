@@ -9,6 +9,15 @@ namespace DiscImageStudio;
 
 public partial class App : Application
 {
+    /// <summary>Settings loaded by <c>Program.Main</c> before the language was initialized.</summary>
+    internal static (AppSettings Settings, AppSettingsStore Store)? StartupSettings { get; set; }
+
+    private static (AppSettings, AppSettingsStore) LoadSettings()
+    {
+        AppSettingsStore store = new();
+        return (store.Load(), store);
+    }
+
     public override void Initialize()
     {
         TransformKeyFrameAnimator.Register();
@@ -19,8 +28,7 @@ public partial class App : Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            AppSettingsStore store = new();
-            AppSettings settings = store.Load();
+            (AppSettings settings, AppSettingsStore store) = StartupSettings ?? LoadSettings();
             ApplyTheme(settings.Theme);
             // New jobs honor the saved cache folder; earlier files keep their paths.
             TempFiles.TryConfigureCacheDirectory(settings.CacheDirectory);

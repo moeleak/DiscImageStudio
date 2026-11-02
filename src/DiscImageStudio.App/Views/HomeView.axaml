@@ -1,6 +1,7 @@
 <UserControl x:Class="DiscImageStudio.Views.HomeView"
              xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="using:DiscImageStudio.Localization"
              xmlns:conv="using:DiscImageStudio.Hosting"
              xmlns:controls="using:DiscImageStudio.Controls"
              xmlns:vm="using:DiscImageStudio.ViewModels"
@@ -13,7 +14,7 @@
         <StackPanel MaxWidth="1120" Margin="{StaticResource PagePadding}">
             <TextBlock Text="Disc Image Studio" Theme="{StaticResource H1Title}" />
             <TextBlock Theme="{StaticResource PageSubtitle}" Margin="0,8,0,0"
-                       Text="全能的光盘盘面可见图像生成与刻录工作台" />
+                       Text="{loc:Text Xaml.CreateAndBurnVisibleArtworkOnOpticalDiscs}" />
 
             <!-- One card for the three ways forward: the open project on the left, starting
                  something else on the right. The project name appears once, on the control that
@@ -29,12 +30,12 @@
                             Height="{StaticResource ControlHeight}" Padding="18,0"
                             Command="{Binding ContinueProjectCommand}"
                             IsVisible="{Binding IsProjectOpen}"
-                            ToolTip.Tip="回到打开的工程，从设计工作区继续。">
+                            ToolTip.Tip="{loc:Text Xaml.ReturnToTheOpenProjectAndContinueInDesign}">
                         <StackPanel Orientation="Horizontal">
                             <controls:LucideIcon Kind="ArrowLeft" Width="16" Height="16"
                                                       VerticalAlignment="Center"
                                                       Foreground="{DynamicResource PrimaryBrush}" />
-                            <TextBlock Text="返回工程" Margin="8,0,0,0" VerticalAlignment="Center" />
+                            <TextBlock Text="{loc:Text Xaml.BackToProject}" Margin="8,0,0,0" VerticalAlignment="Center" />
                             <TextBlock Text="{Binding CurrentProjectName}" Margin="8,0,0,0"
                                        VerticalAlignment="Center" MaxWidth="260"
                                        TextTrimming="CharacterEllipsis"
@@ -42,10 +43,10 @@
                         </StackPanel>
                     </Button>
                     <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right">
-                        <Button Theme="{StaticResource SecondaryButton}" Content="打开工程"
+                        <Button Theme="{StaticResource SecondaryButton}" Content="{loc:Text Xaml.OpenProject}"
                                 Height="{StaticResource ControlHeight}" Padding="18,0"
                                 Command="{Binding OpenProjectCommand}" />
-                        <Button Theme="{StaticResource PrimaryButton}" Content="新建工程"
+                        <Button Theme="{StaticResource PrimaryButton}" Content="{loc:Text Xaml.NewProject}"
                                 Height="{StaticResource ControlHeight}" Padding="18,0" Margin="10,0,0,0"
                                 Command="{Binding NewProjectCommand}" />
                     </StackPanel>
@@ -54,7 +55,7 @@
 
             <!-- Sections follow the Adobe start-page idiom: a bare heading and the content
                  sitting directly on the page, no surrounding card. -->
-            <TextBlock Text="从模板开始" Theme="{StaticResource CardTitle}" Margin="0,32,0,8" />
+            <TextBlock Text="{loc:Text Xaml.StartFromATemplate}" Theme="{StaticResource CardTitle}" Margin="0,32,0,8" />
             <!-- Tiles left-align with the section heading; a hanging last row is correct in
                  the flat, Adobe-style layout. -->
             <ItemsControl ItemsSource="{Binding Templates}">
@@ -91,9 +92,9 @@
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
-                    <TextBlock Grid.Column="0" Text="最近工程" Theme="{StaticResource CardTitle}"
+                    <TextBlock Grid.Column="0" Text="{loc:Text Xaml.RecentProjects}" Theme="{StaticResource CardTitle}"
                                VerticalAlignment="Center" />
-                    <Button Grid.Column="1" Theme="{StaticResource QuietButton}" Content="清空"
+                    <Button Grid.Column="1" Theme="{StaticResource QuietButton}" Content="{loc:Text Xaml.Clear}"
                             Height="{StaticResource CompactHeight}" Padding="14,0"
                             Command="{Binding ClearRecentsCommand}" />
                 </Grid>
@@ -118,7 +119,7 @@
                                                         ToolTip.Tip="{Binding ToolTipText}">
                                 <controls:RecentProjectCard.ContextMenu>
                                     <ContextMenu>
-                                        <MenuItem Header="从列表中移除" Click="RemoveRecent_Click" />
+                                        <MenuItem Header="{loc:Text Xaml.RemoveFromList}" Click="RemoveRecent_Click" />
                                     </ContextMenu>
                                 </controls:RecentProjectCard.ContextMenu>
                             </controls:RecentProjectCard>

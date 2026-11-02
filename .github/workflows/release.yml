@@ -186,23 +186,34 @@ jobs:
           $notes = @(
             $metadata.Notes
             ''
-            '### 下载与运行'
+            '### 下载与运行 / Download and run'
             ''
-            '| 平台 | 文件 | 说明 |'
+            '| 平台 / Platform | 文件 / File | 说明 / Notes |'
             '| --- | --- | --- |'
-            "| Windows 10 2004+ / 11 x64 | ``DiscImageStudio-$env:RELEASE_TAG-win-x64.exe`` | 直接运行，内置 .NET 运行时；未代码签名。 |"
-            "| Linux x64 / arm64 | ``DiscImageStudio-$env:RELEASE_TAG-linux-<arch>.tar.gz`` | 解压后运行 ``DiscImageStudio``，或执行 ``install.sh`` 安装到当前用户菜单。刻录需加入 cdrom / optical 组。 |"
-            "| macOS 14+ Apple 芯片 / Intel | ``DiscImageStudio-$env:RELEASE_TAG-osx-<arch>.dmg`` 或 ``.zip`` | 仅 ad-hoc 签名：首次打开请右键选择“打开”，或在“隐私与安全性”中允许。 |"
+            "| Windows 10 2004+ / 11 x64 | ``DiscImageStudio-$env:RELEASE_TAG-win-x64.exe`` | 直接运行，未代码签名。Run directly; unsigned. |"
+            "| Linux x64 / arm64 | ``DiscImageStudio-$env:RELEASE_TAG-linux-<arch>.tar.gz`` | 解压后运行 ``DiscImageStudio``，或执行 ``install.sh``；刻录需加入 cdrom / optical 组。Extract and run ``DiscImageStudio`` or ``install.sh``; burning needs the cdrom / optical group. |"
+            "| macOS 14+ Apple silicon / Intel | ``DiscImageStudio-$env:RELEASE_TAG-osx-<arch>.dmg`` / ``.zip`` | 仅 ad-hoc 签名，首次打开请右键选择“打开”。Ad-hoc signed only: right-click and choose Open the first time. |"
             ''
-            '即时流式刻录仍为实验性功能；Linux（SG_IO）与 macOS（IOKit）刻录后端尚待实机验证，请先用测试盘确认。硬件实测范围以仓库验证记录为准。'
+            '所有包均已内置 .NET 运行时。即时流式刻录仍为实验性功能；Linux（SG_IO）与 macOS（IOKit）刻录后端尚待实机验证，请先用测试盘确认。'
+            'Every package includes the .NET runtime. Live streaming burn remains experimental; the Linux (SG_IO) and macOS (IOKit) recording backends have not yet been verified on real recorders, so try a test disc first.'
             ''
             '### SHA-256'
+            ''
+            '下载后用 ``Get-FileHash``（Windows）、``sha256sum -c SHA256SUMS.txt --ignore-missing``（Linux）或 ``shasum -a 256 -c SHA256SUMS.txt --ignore-missing``（macOS）核对。'
+            'Verify downloads with ``Get-FileHash`` (Windows), ``sha256sum -c SHA256SUMS.txt --ignore-missing`` (Linux) or ``shasum -a 256 -c SHA256SUMS.txt --ignore-missing`` (macOS).'
             ''
             '```text'
             (Get-Content -LiteralPath 'release/SHA256SUMS.txt' -Raw).Trim()
             '```'
             ''
-            "Source commit: $env:RELEASE_COMMIT"
+            '### 源代码与构建 / Source and build'
+            ''
+            '从本页的 Source code (zip / tar.gz) 下载完整对应源代码；构建说明见下方 README 链接。'
+            'Download the complete corresponding source from Source code (zip / tar.gz) on this page. Build instructions are in the README linked below.'
+            ''
+            "构建说明 / Build instructions: [简体中文 README]($env:GITHUB_SERVER_URL/$env:GITHUB_REPOSITORY/blob/$env:RELEASE_COMMIT/README.md) | [English README]($env:GITHUB_SERVER_URL/$env:GITHUB_REPOSITORY/blob/$env:RELEASE_COMMIT/README.en.md)"
+            ''
+            "源码提交 / Source commit: $env:RELEASE_COMMIT"
           ) -join "`n"
           Set-Content -LiteralPath 'release/release-notes.md' -Value $notes -Encoding utf8
 

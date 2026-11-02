@@ -22,6 +22,8 @@
   </ItemGroup>
   <ItemGroup>
     <!-- Read by AboutViewModel; available offline in every UI host. -->
+    <!-- Localization catalogs; L loads every DiscImageStudio.Localization.Catalogs.*.json resource. -->
+    <EmbeddedResource Include="Localization\Catalogs\*.json" LogicalName="DiscImageStudio.Localization.Catalogs.%(Filename)%(Extension)" />
     <EmbeddedResource Include="..\..\LICENSE" LogicalName="DiscImageStudio.Licenses.GPL" />
     <EmbeddedResource Include="..\..\THIRD-PARTY-NOTICES.txt" LogicalName="DiscImageStudio.Licenses.ThirdParty" />
     <EmbeddedResource Include="..\DiscImageStudio.App\Assets\Fonts\HarmonyOS-Sans-LICENSE.txt" LogicalName="DiscImageStudio.Licenses.HarmonyOS" />

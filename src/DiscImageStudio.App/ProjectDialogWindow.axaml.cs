@@ -1,3 +1,4 @@
+using DiscImageStudio.Localization;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
@@ -19,12 +20,12 @@ public partial class ProjectDialogWindow : Window
         ViewModel = viewModel;
         AvaloniaFileDialogService dialogs = new(() => this);
         viewModel.ShowPresetSaveDialog = () => PresetSaveWindow.ShowAsync(this);
-        viewModel.PickSaveDirectory = initial => dialogs.PickFolderAsync("选择工程保存位置", initial);
+        viewModel.PickSaveDirectory = initial => dialogs.PickFolderAsync(L.T("选择工程保存位置"), initial);
         viewModel.CloseWithConfirm = () => Close(true);
         viewModel.ConfirmPresetSwitch = tile => PresetSwitchConfirm.ShowAsync(
-            "切换预设",
-            $"切换为“{tile.Title}”会用该预设的几何参数覆盖当前参数，确认后无法撤销。是否继续？",
-            "覆盖参数");
+            L.T("切换预设"),
+            L.F($"切换为“{tile.Title}”会用该预设的几何参数覆盖当前参数，确认后无法撤销。是否继续？"),
+            L.T("覆盖参数"));
         DataContext = viewModel;
         AddHandler(KeyDownEvent, (_, args) =>
         {
@@ -47,7 +48,7 @@ public partial class ProjectDialogWindow : Window
             return;
         }
 
-        MenuItem delete = new() { Header = "删除预设" };
+        MenuItem delete = new() { Header = L.T("Xaml.DeletePreset") };
         delete.Click += (_, _) =>
         {
             if (ViewModel.DeletePresetCommand.CanExecute(tile)) ViewModel.DeletePresetCommand.Execute(tile);

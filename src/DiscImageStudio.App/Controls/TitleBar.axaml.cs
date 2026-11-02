@@ -1,3 +1,4 @@
+using DiscImageStudio.Localization;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -16,6 +17,12 @@ public partial class TitleBar : UserControl
         AvaloniaProperty.Register<TitleBar, bool>(nameof(ShowMaximizeButton), true);
     public static readonly StyledProperty<bool> ShowAppMenuProperty =
         AvaloniaProperty.Register<TitleBar, bool>(nameof(ShowAppMenu));
+    public static readonly StyledProperty<bool> ShowSettingsButtonProperty =
+        AvaloniaProperty.Register<TitleBar, bool>(nameof(ShowSettingsButton));
+
+    public static readonly RoutedEvent<RoutedEventArgs> SettingsRequestedEvent =
+        RoutedEvent.Register<TitleBar, RoutedEventArgs>(nameof(SettingsRequested), RoutingStrategies.Bubble);
+
     public static readonly RoutedEvent<RoutedEventArgs> AppMenuRequestedEvent =
         RoutedEvent.Register<TitleBar, RoutedEventArgs>(nameof(AppMenuRequested), RoutingStrategies.Bubble);
 
@@ -38,6 +45,15 @@ public partial class TitleBar : UserControl
     public bool ShowMinimizeButton { get => GetValue(ShowMinimizeButtonProperty); set => SetValue(ShowMinimizeButtonProperty, value); }
     public bool ShowMaximizeButton { get => GetValue(ShowMaximizeButtonProperty); set => SetValue(ShowMaximizeButtonProperty, value); }
     public bool ShowAppMenu { get => GetValue(ShowAppMenuProperty); set => SetValue(ShowAppMenuProperty, value); }
+
+    /// <summary>Shows a direct, labeled settings action. Only the main window opts in.</summary>
+    public bool ShowSettingsButton { get => GetValue(ShowSettingsButtonProperty); set => SetValue(ShowSettingsButtonProperty, value); }
+
+    public event EventHandler<RoutedEventArgs>? SettingsRequested
+    {
+        add => AddHandler(SettingsRequestedEvent, value);
+        remove => RemoveHandler(SettingsRequestedEvent, value);
+    }
 
     public event EventHandler<RoutedEventArgs>? AppMenuRequested
     {
@@ -64,6 +80,7 @@ public partial class TitleBar : UserControl
     private void ApplyWindowButtonVisibility()
     {
         bool captions = WindowChromePolicy.DrawsCaptionButtons;
+        SettingsButton.IsVisible = ShowSettingsButton;
         AppMenuButton.IsVisible = ShowAppMenu;
         MinimizeButton.IsVisible = captions && ShowMinimizeButton;
         MaximizeButton.IsVisible = captions && ShowMaximizeButton;
@@ -100,7 +117,7 @@ public partial class TitleBar : UserControl
     private void UpdateGlyph()
     {
         bool maximized = _window?.WindowState == WindowState.Maximized;
-        ToolTip.SetTip(MaximizeButton, maximized ? "还原" : "最大化");
+        ToolTip.SetTip(MaximizeButton, maximized ? L.T("还原") : L.T("最大化"));
         MaximizeGlyph.IsVisible = !maximized;
         RestoreGlyph.IsVisible = maximized;
     }
@@ -128,6 +145,9 @@ public partial class TitleBar : UserControl
     private void Maximize_Click(object? sender, RoutedEventArgs e) => ToggleMaximize();
 
     private void Close_Click(object? sender, RoutedEventArgs e) => _window?.Close();
+
+    private void Settings_Click(object? sender, RoutedEventArgs e)
+        => RaiseEvent(new RoutedEventArgs(SettingsRequestedEvent, SettingsButton));
 
     private void AppMenu_Click(object? sender, RoutedEventArgs e)
         => RaiseEvent(new RoutedEventArgs(AppMenuRequestedEvent, AppMenuButton));

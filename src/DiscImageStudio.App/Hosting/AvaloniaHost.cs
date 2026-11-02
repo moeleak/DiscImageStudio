@@ -1,3 +1,4 @@
+using DiscImageStudio.Localization;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Avalonia;
@@ -92,7 +93,7 @@ public sealed class AvaloniaFileDialogService(Func<TopLevel?> topLevelProvider) 
         if (topLevelProvider()?.StorageProvider is not { CanSave: true } storage) return null;
         IStorageFile? file = await storage.SaveFilePickerAsync(new FilePickerSaveOptions
         {
-            Title = title ?? "选择输出位置",
+            Title = title ?? L.T("选择输出位置"),
             SuggestedFileName = fileName,
             DefaultExtension = extension.TrimStart('.'),
             FileTypeChoices = ToFileTypes(filters),

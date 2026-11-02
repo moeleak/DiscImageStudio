@@ -1,5 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="using:DiscImageStudio.Localization"
              xmlns:controls="using:DiscImageStudio.Controls"
              xmlns:vm="using:DiscImageStudio.ViewModels"
              xmlns:conv="using:DiscImageStudio.Hosting"
@@ -56,7 +57,7 @@
                             <TextBlock Text="{Binding Message}" Theme="{StaticResource CompactText}" Margin="0,4,0,0" />
                         </StackPanel>
                         <Button Grid.Column="2" Theme="{StaticResource IconButton}" VerticalAlignment="Top"
-                                ToolTip.Tip="关闭" Click="CloseToast_Click">
+                                ToolTip.Tip="{loc:Text Xaml.Close}" Click="CloseToast_Click">
                             <controls:LucideIcon Kind="X" Width="14" Height="14" Foreground="{DynamicResource TextMutedBrush}" />
                         </Button>
                     </Grid>

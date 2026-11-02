@@ -1,6 +1,7 @@
 <UserControl x:Class="DiscImageStudio.Views.DesignView"
              xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="using:DiscImageStudio.Localization"
              xmlns:conv="using:DiscImageStudio.Hosting"
              xmlns:controls="using:DiscImageStudio.Controls"
              xmlns:vm="using:DiscImageStudio.ViewModels"
@@ -11,7 +12,7 @@
              Two-column compact grid instead of the old fixed 94px WrapPanel cells. -->
         <DataTemplate DataType="vm:DesignLayerViewModel">
             <StackPanel>
-                <TextBlock Theme="{StaticResource FieldLabel}" Text="图层名" />
+                <TextBlock Theme="{StaticResource FieldLabel}" Text="{loc:Text Xaml.LayerName}" />
                 <TextBox Theme="{StaticResource CompactTextBox}"
                          Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,14" />
                 <Grid Margin="0,0,0,12">
@@ -36,12 +37,12 @@
                                  Value="{Binding TranslateYMm}" Format="F2" />
                     </StackPanel>
                     <StackPanel Grid.Row="2" Grid.Column="0">
-                        <TextBlock Theme="{StaticResource FieldLabel}" Text="旋转 (°)" />
+                        <TextBlock Theme="{StaticResource FieldLabel}" Text="{loc:Text Xaml.Rotation}" />
                         <controls:NumberBox Theme="{StaticResource CompactTextBox}"
                                  Value="{Binding RotationDeg}" Format="F1" />
                     </StackPanel>
                     <StackPanel Grid.Row="2" Grid.Column="2">
-                        <TextBlock Theme="{StaticResource FieldLabel}" Text="缩放 (%)" />
+                        <TextBlock Theme="{StaticResource FieldLabel}" Text="{loc:Text Xaml.Scale}" />
                         <controls:NumberBox Theme="{StaticResource CompactTextBox}"
                                  Value="{Binding ScalePercent}" />
                     </StackPanel>
@@ -60,10 +61,10 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
-        <controls:PageHeader Grid.Row="0" Title="设计" Badge="{Binding FamilyLabel}"
+        <controls:PageHeader Grid.Row="0" Title="{loc:Text Xaml.Design}" Badge="{Binding FamilyLabel}"
                              Workspace="{x:Static vm:Workspace.Design}">
             <controls:PageHeader.Actions>
-                <Button Theme="{StaticResource CompactButton}" Content="下一步：预览"
+                <Button Theme="{StaticResource CompactButton}" Content="{loc:Text Xaml.NextPreview}"
                         Command="{Binding NavigateCommand}"
                         CommandParameter="{x:Static vm:Workspace.Preview}" />
             </controls:PageHeader.Actions>
@@ -114,8 +115,8 @@
                                 </Grid.RowDefinitions>
                                 <Border Grid.Row="0" Theme="{StaticResource CardHeaderBandStyle}">
                                     <Grid Margin="16,0,12,0">
-                                        <TextBlock Text="图层" Theme="{StaticResource PanelTitle}" />
-                                        <TextBlock Text="{Binding Layers.Count, StringFormat={}{0} 层}"
+                                        <TextBlock Text="{loc:Text Xaml.Layers}" Theme="{StaticResource PanelTitle}" />
+                                        <TextBlock Text="{Binding Layers.Count, StringFormat={loc:Text Xaml.LayerCountFormat}}"
                                                    Theme="{StaticResource HintText}" HorizontalAlignment="Right" />
                                     </Grid>
                                 </Border>
@@ -155,7 +156,7 @@
                                                         VerticalAlignment="Center"
                                                         Command="{Binding $parent[ListBox].((vm:DesignViewModel)DataContext).ToggleVisibilityCommand}"
                                                         CommandParameter="{Binding}"
-                                                        ToolTip.Tip="显示 / 隐藏">
+                                                        ToolTip.Tip="{loc:Text Xaml.ShowHide}">
                                                     <Panel>
                                                         <controls:LucideIcon Kind="Eye" Width="15" Height="15"
                                                                              IsVisible="{Binding IsVisible}"
@@ -173,23 +174,23 @@
                                     <!-- Selection actions: operate on the highlighted layer only. -->
                                     <StackPanel Orientation="Horizontal" Margin="0,0,0,10"
                                                 IsVisible="{Binding HasSelectionVisible}">
-                                        <Button Theme="{StaticResource IconButton}" Command="{Binding MoveSelectedUpCommand}" ToolTip.Tip="上移一层">
+                                        <Button Theme="{StaticResource IconButton}" Command="{Binding MoveSelectedUpCommand}" ToolTip.Tip="{loc:Text Xaml.MoveUpOneLayer}">
                                             <controls:LucideIcon Kind="ArrowUp" Width="15" Height="15"
                                                                       Foreground="{DynamicResource TextSecondaryBrush}" />
                                         </Button>
                                         <Button Theme="{StaticResource IconButton}" Margin="6,0,0,0"
-                                                Command="{Binding MoveSelectedDownCommand}" ToolTip.Tip="下移一层">
+                                                Command="{Binding MoveSelectedDownCommand}" ToolTip.Tip="{loc:Text Xaml.MoveDownOneLayer}">
                                             <controls:LucideIcon Kind="ArrowDown" Width="15" Height="15"
                                                                       Foreground="{DynamicResource TextSecondaryBrush}" />
                                         </Button>
                                         <Button Theme="{StaticResource IconButton}" Margin="6,0,0,0"
-                                                Command="{Binding RemoveSelectedCommand}" ToolTip.Tip="删除选中图层（Del）">
+                                                Command="{Binding RemoveSelectedCommand}" ToolTip.Tip="{loc:Text Xaml.DeleteSelectedLayerDel}">
                                             <controls:LucideIcon Kind="Trash2" Width="15" Height="15"
                                                                       Foreground="{DynamicResource TextSecondaryBrush}" />
                                         </Button>
                                     </StackPanel>
                                     <Button Theme="{StaticResource SecondaryButton}" Height="{StaticResource ControlHeight}"
-                                            Content="导入图片" Command="{Binding ImportImagesCommand}"
+                                            Content="{loc:Text Xaml.ImportImages}" Command="{Binding ImportImagesCommand}"
                                             HorizontalAlignment="Stretch" />
                                 </StackPanel>
                             </Grid>
@@ -204,39 +205,39 @@
                                  export page. -->
                             <Border Theme="{StaticResource CardStyle}" Padding="14" Margin="0,16,0,0">
                                 <StackPanel>
-                                    <TextBlock Text="随盘文件" Theme="{StaticResource PanelTitle}"
+                                    <TextBlock Text="{loc:Text Xaml.DiscFiles}" Theme="{StaticResource PanelTitle}"
                                                Margin="0,0,0,12" />
                                     <controls:VisibilityGate IsOpen="{Binding IsCd}">
                                         <StackPanel>
-                                            <controls:PathField Label="文件夹" Compact="True"
+                                            <controls:PathField Label="{loc:Text Xaml.Folder}" Compact="True"
                                                                 Text="{Binding State.CdDataDirectory}"
                                                                 ToolTip.Tip="{Binding State.CdDataDirectory}"
-                                                                ButtonLabel="选文件夹…"
+                                                                ButtonLabel="{loc:Text Xaml.Browse3}"
                                                                 Command="{Binding BrowseDataCommand}" />
                                             <controls:VisibilityGate IsOpen="{Binding State.HasCdFiles}">
                                                 <StackPanel Margin="0,14,0,0">
                                                     <TextBlock Theme="{StaticResource FieldLabel}"
-                                                               Text="文件位置" Margin="0,0,0,6" />
-                                                    <controls:SegmentedControl LabelA="内圈" LabelB="外圈"
+                                                               Text="{loc:Text Xaml.FilePlacement}" Margin="0,0,0,6" />
+                                                    <controls:SegmentedControl LabelA="{loc:Text Xaml.InnerRing}" LabelB="{loc:Text Xaml.OuterRing}"
                                                                                IsSecondSelected="{Binding State.CdFilesAtOuterRing}" />
                                                 </StackPanel>
                                             </controls:VisibilityGate>
                                             <TextBlock Theme="{StaticResource HintText}" Margin="0,12,0,0"
-                                                       Text="不附文件时使用音轨；附文件时自动使用数据盘。" />
+                                                       Text="{loc:Text Xaml.UsesAnAudioTrackWithoutFilesSwitchesToA}" />
                                         </StackPanel>
                                     </controls:VisibilityGate>
                                     <controls:VisibilityGate IsOpen="{Binding IsDvd}">
                                         <StackPanel>
-                                            <controls:PathField Label="文件夹（留空则整盘只绘图）" Compact="True"
+                                            <controls:PathField Label="{loc:Text Xaml.FolderOptional}" Compact="True"
                                                                 Text="{Binding State.DvdDataDirectory}"
                                                                 ToolTip.Tip="{Binding State.DvdDataDirectory}"
-                                                                ButtonLabel="选文件夹…"
+                                                                ButtonLabel="{loc:Text Xaml.Browse3}"
                                                                 Command="{Binding BrowseDataCommand}" />
                                             <controls:VisibilityGate IsOpen="{Binding State.HasDvdFiles}">
                                                 <StackPanel Margin="0,14,0,0">
                                                     <TextBlock Theme="{StaticResource FieldLabel}"
-                                                               Text="文件位置" Margin="0,0,0,6" />
-                                                    <controls:SegmentedControl LabelA="内圈" LabelB="外圈"
+                                                               Text="{loc:Text Xaml.FilePlacement}" Margin="0,0,0,6" />
+                                                    <controls:SegmentedControl LabelA="{loc:Text Xaml.InnerRing}" LabelB="{loc:Text Xaml.OuterRing}"
                                                                                IsSecondSelected="{Binding State.DvdFilesAtOuterRing}" />
                                                 </StackPanel>
                                             </controls:VisibilityGate>
@@ -244,16 +245,16 @@
                                     </controls:VisibilityGate>
                                     <controls:VisibilityGate IsOpen="{Binding IsBluRay}">
                                         <StackPanel>
-                                            <controls:PathField Label="文件夹（留空则整盘只绘图）" Compact="True"
+                                            <controls:PathField Label="{loc:Text Xaml.FolderOptional}" Compact="True"
                                                                 Text="{Binding State.BdDataDirectory}"
                                                                 ToolTip.Tip="{Binding State.BdDataDirectory}"
-                                                                ButtonLabel="选文件夹…"
+                                                                ButtonLabel="{loc:Text Xaml.Browse3}"
                                                                 Command="{Binding BrowseDataCommand}" />
                                             <controls:VisibilityGate IsOpen="{Binding State.HasBluRayFiles}">
                                                 <StackPanel Margin="0,14,0,0">
                                                     <TextBlock Theme="{StaticResource FieldLabel}"
-                                                               Text="文件位置" Margin="0,0,0,6" />
-                                                    <controls:SegmentedControl LabelA="内圈" LabelB="外圈"
+                                                               Text="{loc:Text Xaml.FilePlacement}" Margin="0,0,0,6" />
+                                                    <controls:SegmentedControl LabelA="{loc:Text Xaml.InnerRing}" LabelB="{loc:Text Xaml.OuterRing}"
                                                                                IsSecondSelected="{Binding State.BdFilesAtOuterRing}" />
                                                 </StackPanel>
                                             </controls:VisibilityGate>
@@ -280,22 +281,22 @@
                                 Background="{DynamicResource Surface2Brush}"
                                 BorderBrush="{DynamicResource DividerBrush}" BorderThickness="1"
                                 CornerRadius="{StaticResource RadiusChip}"
-                                ToolTip.Tip="Ctrl/Alt + 滚轮同样可以缩放；中键拖动平移">
+                                ToolTip.Tip="{loc:Text Xaml.CtrlAltScrollToZoomMiddleDragToPan}">
                             <StackPanel Orientation="Horizontal">
-                                <Button Theme="{StaticResource IconButton}" Click="ZoomOutClick" ToolTip.Tip="缩小">
+                                <Button Theme="{StaticResource IconButton}" Click="ZoomOutClick" ToolTip.Tip="{loc:Text Xaml.ZoomOut}">
                                     <controls:LucideIcon Kind="Minus" Width="14" Height="14"
                                                               Foreground="{DynamicResource TextSecondaryBrush}" />
                                 </Button>
                                 <TextBlock Text="{Binding #DesignCanvas.ZoomPercent}"
                                            Theme="{StaticResource MicroText}" MinWidth="40"
                                            TextAlignment="Center" VerticalAlignment="Center" />
-                                <Button Theme="{StaticResource IconButton}" Click="ZoomInClick" ToolTip.Tip="放大">
+                                <Button Theme="{StaticResource IconButton}" Click="ZoomInClick" ToolTip.Tip="{loc:Text Xaml.ZoomIn}">
                                     <controls:LucideIcon Kind="Plus" Width="14" Height="14"
                                                               Foreground="{DynamicResource TextSecondaryBrush}" />
                                 </Button>
                                 <Border Width="1" Height="16" Margin="3,0" VerticalAlignment="Center"
                                         Background="{DynamicResource DividerBrush}" />
-                                <Button Theme="{StaticResource IconButton}" Click="ResetCanvasZoomClick" ToolTip.Tip="适应窗口（双击空白处同样生效）">
+                                <Button Theme="{StaticResource IconButton}" Click="ResetCanvasZoomClick" ToolTip.Tip="{loc:Text Xaml.FitToWindowOrDoubleClickEmptySpace}">
                                     <controls:LucideIcon Kind="RefreshCcw" Width="14" Height="14"
                                                               Foreground="{DynamicResource TextSecondaryBrush}" />
                                 </Button>
@@ -319,7 +320,7 @@
                         </Grid.RowDefinitions>
                         <Border x:Name="PropsCard" Grid.Row="0" Theme="{StaticResource CardStyle}" Padding="14">
                             <StackPanel>
-                                <TextBlock Text="属性" Theme="{StaticResource PanelTitle}"
+                                <TextBlock Text="{loc:Text Xaml.Properties}" Theme="{StaticResource PanelTitle}"
                                            Margin="0,0,0,12" />
                                 <!-- Selected/empty as two gates, like every other page: the
                                      ContentPresenter keeps the numeric fields' implicit styles alive. -->
@@ -328,7 +329,7 @@
                                 </controls:VisibilityGate>
                                 <controls:VisibilityGate IsOpen="{Binding HasSelection}" Inverted="True">
                                     <TextBlock Theme="{StaticResource HintText}"
-                                               Text="在画布上点击一个图层以编辑它的位置、旋转与缩放。" />
+                                               Text="{loc:Text Xaml.SelectALayerOnTheCanvasToEditIts}" />
                                 </controls:VisibilityGate>
                             </StackPanel>
                         </Border>
